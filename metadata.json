@@ -1,0 +1,6 @@
+{
+  "name": "RemoteConfig.io",
+  "description": "Zero-infrastructure remote configuration management for modern web applications. Manage your production configs directly via GitHub with full type-safety.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
