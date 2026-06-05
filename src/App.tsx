@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { GitHubProvider, useGitHub } from './hooks/useGitHub';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from 'sonner';
@@ -10,71 +10,55 @@ import { Docs } from './pages/Docs';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Layout } from './layouts/Layout';
+import { useState } from 'react';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { token, isLoading } = useGitHub();
+  if (isLoading) return (
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-white">
+      <div className="w-10 h-10 border-2 border-black/10 border-t-black rounded-full animate-spin" />
+      <p className="mt-5 caption text-[#737373]">Connecting…</p>
+    </div>
+  );
+  if (!token) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
 
 function AppContent() {
-  const { token, user, isLoading } = useGitHub();
-  const [currentPage, setCurrentPage] = useState<'home' | 'docs' | 'dashboard' | 'editor' | 'privacy' | 'terms'>('home');
-  const [selectedRepo, setSelectedRepo] = useState<any>(null);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
-
-  if (isLoading && !token) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background text-foreground">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
-        </div>
-        <p className="mt-8 text-muted-foreground animate-pulse font-mono tracking-[0.3em] text-[10px] uppercase font-bold">Synchronizing...</p>
-      </div>
-    );
-  }
-
-  // Public pages (accessible without token)
-  const isPublicPage = ['home', 'docs', 'privacy', 'terms'].includes(currentPage);
-  
-  if (isPublicPage) {
-    return (
-      <Layout onNavigate={(page) => setCurrentPage(page as any)} activePage={currentPage}>
-        {currentPage === 'home' && <Home onStart={() => setCurrentPage('dashboard')} onNavigate={(page) => setCurrentPage(page as any)} />}
-        {currentPage === 'docs' && <Docs onNavigate={(page) => setCurrentPage(page as any)} />}
-        {currentPage === 'privacy' && <Privacy onNavigate={(page) => setCurrentPage(page as any)} />}
-        {currentPage === 'terms' && <Terms onNavigate={(page) => setCurrentPage(page as any)} />}
-      </Layout>
-    );
-  }
-
-  // Protected pages
-  if (!token) {
-    return <Login onBack={() => setCurrentPage('home')} />;
-  }
+  const [editorState, setEditorState] = useState<{ repo: any; path: string | null } | null>(null);
+  const noop = () => {};
 
   return (
-    <Layout 
-      onNavigate={(page) => setCurrentPage(page as any)} 
-      activePage={currentPage}
-    >
-      {currentPage === 'home' && <Home onStart={() => setCurrentPage('dashboard')} onNavigate={(page) => setCurrentPage(page as any)} />}
-      {currentPage === 'docs' && <Docs onNavigate={(page) => setCurrentPage(page as any)} />}
-      {currentPage === 'dashboard' && (
-        <Dashboard 
-          onEditFile={(repo, path) => {
-            setSelectedRepo(repo);
-            setSelectedPath(path);
-            setCurrentPage('editor');
-          }} 
-        />
-      )}
-      {currentPage === 'editor' && (
-        <Editor 
-          repo={selectedRepo} 
-          initialPath={selectedPath}
-          onBack={() => {
-            setCurrentPage('dashboard');
-            setSelectedRepo(null);
-            setSelectedPath(null);
-          }} 
-        />
-      )}
-    </Layout>
+    <Routes>
+      {/* Public routes with nav layout */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/docs" element={<Docs />} />
+        <Route path="/privacy" element={<Privacy onNavigate={noop} />} />
+        <Route path="/terms" element={<Terms onNavigate={noop} />} />
+      </Route>
+
+      {/* Auth — no layout chrome */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected routes */}
+      <Route element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route path="/dashboard" element={
+          <Dashboard onEditFile={(repo, path) => setEditorState({ repo, path })} />
+        } />
+        <Route path="/editor" element={
+          editorState
+            ? <Editor repo={editorState.repo} initialPath={editorState.path} onBack={() => setEditorState(null)} />
+            : <Navigate to="/dashboard" replace />
+        } />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
@@ -83,11 +67,7 @@ export default function App() {
     <ThemeProvider>
       <GitHubProvider>
         <AppContent />
-        <Toaster 
-          position="top-center"
-          theme="dark"
-          richColors
-        />
+        <Toaster position="top-center" richColors />
       </GitHubProvider>
     </ThemeProvider>
   );

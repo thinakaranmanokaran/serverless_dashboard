@@ -75,7 +75,7 @@ export const Terms: React.FC<TermsProps> = ({ onNavigate }) => {
           </div>
         </motion.div>
       </div>
-      <Footer onNavigate={onNavigate} />
+      <Footer />
     </div>
   );
 };

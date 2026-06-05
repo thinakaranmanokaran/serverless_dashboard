@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /dashboard
-
-# Sitemaps
+Disallow: /editor
 Sitemap: https://remoteconfig.io/sitemap.xml

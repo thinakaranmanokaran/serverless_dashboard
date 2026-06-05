@@ -73,7 +73,7 @@ export const Privacy: React.FC<PrivacyProps> = ({ onNavigate }) => {
           </div>
         </motion.div>
       </div>
-      <Footer onNavigate={onNavigate} />
+      <Footer />
     </div>
   );
 };

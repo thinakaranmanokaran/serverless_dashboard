@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGitHub } from '../hooks/useGitHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
