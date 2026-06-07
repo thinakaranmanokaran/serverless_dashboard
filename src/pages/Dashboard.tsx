@@ -23,7 +23,12 @@ import {
   HelpCircle,
   ShieldCheck,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  X,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -46,10 +51,14 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
+  const navigate = useNavigate();
   const { repos, isLoading, user, service, error, clearError } = useGitHub();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'stars'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const bannerError = useMemo(() => {
     if (!error) return null;
@@ -67,12 +76,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
   const [newFileName, setNewFileName] = useState('');
 
   const filteredRepos = useMemo(() => {
-    return repos.filter(repo =>
-      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [repos, searchQuery]);
+    let filtered = repos.filter(repo => {
+      const matchesSearch = repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        repo.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPrivacy = privacyFilter === 'all' ||
+        (privacyFilter === 'private' && repo.private) ||
+        (privacyFilter === 'public' && !repo.private);
+      return matchesSearch && matchesPrivacy;
+    });
 
+    // Sort
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+      if (sortBy === 'name') {
+        compareValue = a.name.localeCompare(b.name);
+      } else if (sortBy === 'date') {
+        compareValue = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      } else if (sortBy === 'stars') {
+        compareValue = a.stargazers_count - b.stargazers_count;
+      }
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return filtered;
+  }, [repos, searchQuery, privacyFilter, sortBy, sortOrder]);
   const modalFilteredRepos = useMemo(() => {
     return repos.filter(repo =>
       repo.name.toLowerCase().includes(repoSearch.toLowerCase())
@@ -91,6 +118,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
     setRecentRepos(updated);
   };
 
+  const clearRecentRepos = () => {
+    localStorage.removeItem('gh_recent_repos');
+    setRecentRepos([]);
+  };
+
+  const removeRecentRepo = (repoId: number) => {
+    const updated = recentRepos.filter((r: any) => r.id !== repoId);
+    localStorage.setItem('gh_recent_repos', JSON.stringify(updated));
+    setRecentRepos(updated);
+  };
+
+  const goToRepo = (repo: any) => {
+    navigate(`/${repo.owner.login}/${repo.name}`, { state: { repo } });
+  };
+
   const handleEditFile = (repo: any, path: string | null) => {
     if (repo) {
       if (modalStep === 'name' && !newFileName.trim()) {
@@ -100,7 +142,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
 
       const finalPath = path || (newFileName.endsWith('.json') ? newFileName : `${newFileName}.json`);
       updateRecentRepos(repo);
-      onEditFile(repo, finalPath);
+      // Navigate to repo route with file path
+      navigate(`/${repo.owner.login}/${repo.name}?file=${finalPath}`);
       setIsModalOpen(false);
     }
   };
@@ -199,25 +242,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
       {/* Recent Repositories */}
       {recentRepos.length > 0 && (
         <section className="color-block color-block-lime section-gap max-w-[1280px] mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <Clock className="w-5 h-5 text-black" />
-            <h2 className="headline text-black" style={{ fontSize: 22, fontWeight: 540 }}>Jump Back In</h2>
+          <div className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-black" />
+              <h2 className="headline text-black" style={{ fontSize: 22, fontWeight: 540 }}>Jump Back In</h2>
+            </div>
+            <button
+              onClick={clearRecentRepos}
+              className="text-xs font-semibold text-black/60 hover:text-black transition-colors underline" style={{ fontWeight: 540 }}
+            >
+              Clear all
+            </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {recentRepos.map((repo: any) => (
-              <button
-                key={repo.id}
-                onClick={() => handleEditFile(repo, null)}
-                className="group p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-all text-left flex items-center gap-3 border border-black/10"
-              >
-                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 border border-black/10 group-hover:bg-black group-hover:text-white transition-all">
-                  <Github className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="body-sm font-semibold truncate text-black group-hover:text-black transition-colors" style={{ fontWeight: 540 }}>{repo.name}</p>
-                  <p className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>{repo.owner.login}</p>
-                </div>
-              </button>
+              <div key={repo.id} className="group relative">
+                <button
+                  onClick={() => goToRepo(repo)}
+                  className="w-full p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-all text-left flex items-center gap-3 border border-black/10"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 border border-black/10 group-hover:bg-black group-hover:text-white transition-all">
+                    <Github className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="body-sm font-semibold truncate text-black group-hover:text-black transition-colors" style={{ fontWeight: 540 }}>{repo.name}</p>
+                    <p className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>{repo.owner.login}</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => removeRecentRepo(repo.id)}
+                  className="absolute top-2 right-2 p-1 rounded-lg bg-black/0 hover:bg-black/10 transition-all opacity-0 group-hover:opacity-100"
+                  title="Remove from recent"
+                >
+                  <X className="w-4 h-4 text-black" />
+                </button>
+              </div>
             ))}
           </div>
         </section>
@@ -225,31 +284,95 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
 
       {/* Your Repositories */}
       <div className="space-y-8 max-w-[1280px] mx-auto">
-        <div className="px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-black rounded-full" />
-            <h2 className="display-lg text-black" style={{ fontSize: 28, fontWeight: 540 }}>Your Repositories</h2>
-            {/* Show the count */}
-            <div className="body-sm text-[#737373] px-2" style={{ fontWeight: 320 }}>{repos.length}</div>
-          </div>
+        <div className="px-6 flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-black rounded-full" />
+              <h2 className="display-lg text-black" style={{ fontSize: 28, fontWeight: 540 }}>Your Repositories</h2>
+              {/* Show the filtered count */}
+              <div className="body-sm text-[#737373] px-2" style={{ fontWeight: 320 }}>{filteredRepos.length}</div>
+            </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-[#737373] hover:bg-[#f5f5f5] h-10 w-10"
+              className="rounded-full text-[#737373] hover:bg-[#f5f5f5] h-10 w-10 md:hidden"
               onClick={() => setIsHelpOpen(true)}
             >
               <HelpCircle className="w-5 h-5" />
             </Button>
-            <div className="relative flex-1 md:w-80">
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+            <div className="relative w-1/3">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737373]" />
               <Input
-                placeholder="Filter repositories..."
+                placeholder="Search repositories..."
                 className="pl-10 bg-[#f5f5f5] border border-[#e5e5e5] text-black h-10 rounded-lg focus:border-black/20 transition-all placeholder:text-[#737373]/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+            <div className="w-full md:w-auto flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#f5f5f5] border border-[#e5e5e5]">
+                <Filter className="w-4 h-4 text-[#737373] ml-2" />
+                {([
+                  { key: 'all', label: 'All' },
+                  { key: 'public', label: 'Public' },
+                  { key: 'private', label: 'Private' }
+                ] as const).map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setPrivacyFilter(item.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs transition-all ${privacyFilter === item.key
+                      ? 'bg-black text-white shadow-sm'
+                      : 'text-[#737373] hover:text-black hover:bg-white'
+                      }`}
+                    style={{ fontWeight: 540 }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#f5f5f5] border border-[#e5e5e5]">
+                <ArrowUpDown className="w-4 h-4 text-[#737373] ml-2" />
+                {([
+                  { key: 'date', label: 'Date' },
+                  { key: 'name', label: 'Name' },
+                  { key: 'stars', label: 'Stars' }
+                ] as const).map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setSortBy(item.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs transition-all ${sortBy === item.key
+                      ? 'bg-white text-black border border-[#e5e5e5]'
+                      : 'text-[#737373] hover:text-black hover:bg-white'
+                      }`}
+                    style={{ fontWeight: 540 }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="h-10 w-10 rounded-xl bg-[#f5f5f5] border border-[#e5e5e5] text-black hover:border-black/20 hover:bg-white transition-all flex items-center justify-center"
+                title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                aria-label={`Sort ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
+              >
+                {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+              </button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-[#737373] hover:bg-[#f5f5f5] h-10 w-10 hidden md:flex"
+                onClick={() => setIsHelpOpen(true)}
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -271,8 +394,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
               >
                 <motion.button
                   whileHover={{ y: -3 }}
-                  onClick={() => handleEditFile(repo, null)}
-                  className="w-full p-6 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-all text-left flex flex-col h-full"
+                  onClick={() => goToRepo(repo)}
+                  className="w-full p-6 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-all text-left flex flex-col h-full cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1">
@@ -281,9 +404,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
                       </div>
                       <div className="flex-1">
                         <p className="headline text-black truncate" style={{ fontSize: 17, fontWeight: 540 }}>{repo.name}</p>
-                        <span className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>
-                          {repo.private ? 'Private' : 'Public'}
-                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          {repo.private && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#f5f5f5] text-[9px] text-black/60 uppercase tracking-widest font-semibold" style={{ fontWeight: 540 }}>
+                              <Lock className="w-3 h-3" />
+                              Private
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-[#e5e5e5] group-hover:text-black group-hover:translate-x-1 transition-all" />
@@ -502,7 +630,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
 
       {/* Permissions Help Dialog */}
       <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent className="sm:max-w-[420px] md:max-w-[620px] bg-white border border-[#e5e5e5] rounded-3xl p-6">
+        <DialogContent className="sm:max-w-[420px] md:max-w-[620px] bg-white border border-[#e5e5e5] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="headline text-black flex items-center gap-2" style={{ fontSize: 22, fontWeight: 540 }}>
               <ShieldCheck className="w-5 h-5 text-black" />

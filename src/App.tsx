@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubProvider, useGitHub } from './hooks/useGitHub';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from 'sonner';
@@ -22,6 +22,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   );
   if (!token) return <Navigate to="/register" replace />;
   return <>{children}</>;
+}
+
+function RepoRoute({ editorState, setEditorState }: any) {
+  const location = useLocation();
+  const repo = location.state?.repo;
+
+  if (!repo) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <Editor 
+      repo={repo} 
+      initialPath={null} 
+      onBack={() => setEditorState(null)} 
+    />
+  );
 }
 
 function AppContent() {
@@ -49,6 +66,9 @@ function AppContent() {
       }>
         <Route path="/dashboard" element={
           <Dashboard onEditFile={(repo, path) => setEditorState({ repo, path })} />
+        } />
+        <Route path="/:username/:repo" element={
+          <RepoRoute editorState={editorState} setEditorState={setEditorState} />
         } />
         <Route path="/editor" element={
           editorState

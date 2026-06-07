@@ -315,8 +315,8 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
                   <div className="flex gap-2 p-1 bg-secondary/30 hairline rounded-md items-center">
                     <Plus className="w-4 h-4 text-muted-foreground/40 ml-2" />
                     <Input 
-                      placeholder="new_config" 
-                      className="h-8 bg-transparent border-none text-xs focus-visible:ring-0 px-0 placeholder:text-muted-foreground/30"
+                      placeholder="Add filename.json" 
+                      className="h-10 bg-transparent border-none text-xs focus-visible:ring-0  px-4 rounded-md"
                       value={newFilePath}
                       onChange={(e) => setNewFilePath(e.target.value)}
                     />
@@ -427,7 +427,7 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
                           <div className="flex flex-col items-center justify-center text-center p-12 mt-12 bg-muted/20 rounded-md hairline border-dashed">
                             <Plus className="w-12 h-12 text-muted-foreground/30 mb-4" />
                             <h3 className="text-xl font-semibold text-foreground mb-2 tracking-tight">Empty Manifest</h3>
-                            <p className="text-sm text-muted-foreground max-w-sm">Start adding keys to your new configuration using the builder.</p>
+                            <p className="text-sm text-muted-foreground">Start adding keys to your new configuration using the builder.</p>
                           </div>
                         )}
                       </div>
