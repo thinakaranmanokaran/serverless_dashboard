@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useGitHub } from '../hooks/useGitHub';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -129,10 +129,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
     setRecentRepos(updated);
   };
 
-  const goToRepo = (repo: any) => {
-    navigate(`/${repo.owner.login}/${repo.name}`, { state: { repo } });
-  };
-
   const handleEditFile = (repo: any, path: string | null) => {
     if (repo) {
       if (modalStep === 'name' && !newFileName.trim()) {
@@ -257,9 +253,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {recentRepos.map((repo: any) => (
               <div key={repo.id} className="group relative">
-                <button
-                  onClick={() => goToRepo(repo)}
-                  className="w-full p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-all text-left flex items-center gap-3 border border-black/10"
+                <Link
+                  to={`/${repo.owner.login}/${repo.name}`}
+                  state={{ repo }}
+                  onClick={() => updateRecentRepos(repo)}
+                  className="block w-full p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-all text-left flex items-center gap-3 border border-black/10"
                 >
                   <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 border border-black/10 group-hover:bg-black group-hover:text-white transition-all">
                     <Github className="w-5 h-5" />
@@ -268,10 +266,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
                     <p className="body-sm font-semibold truncate text-black group-hover:text-black transition-colors" style={{ fontWeight: 540 }}>{repo.name}</p>
                     <p className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>{repo.owner.login}</p>
                   </div>
-                </button>
+                </Link>
                 <button
-                  onClick={() => removeRecentRepo(repo.id)}
-                  className="absolute top-2 right-2 p-1 rounded-lg bg-black/0 hover:bg-black/10 transition-all opacity-0 group-hover:opacity-100"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeRecentRepo(repo.id); }}
+                  className="absolute top-2 right-2 p-1 rounded-lg bg-black/0 hover:bg-black/10 transition-all opacity-0 group-hover:opacity-100 z-10"
                   title="Remove from recent"
                 >
                   <X className="w-4 h-4 text-black" />
@@ -391,11 +389,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
+                whileHover={{ y: -3 }}
               >
-                <motion.button
-                  whileHover={{ y: -3 }}
-                  onClick={() => goToRepo(repo)}
-                  className="w-full p-6 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-all text-left flex flex-col h-full cursor-pointer"
+                <Link
+                  to={`/${repo.owner.login}/${repo.name}`}
+                  state={{ repo }}
+                  onClick={() => updateRecentRepos(repo)}
+                  className="block w-full p-6 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-all text-left flex flex-col h-full cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1">
@@ -433,7 +433,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
                       </div>
                     </div>
                   </div>
-                </motion.button>
+                </Link>
               </motion.div>
             ))}
           </div>
@@ -677,4 +677,3 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
     </div>
   );
 };
-

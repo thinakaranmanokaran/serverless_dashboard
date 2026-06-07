@@ -10,7 +10,6 @@ import {
   ToggleLeft, 
   Layers, 
   ListOrdered, 
-  MoreVertical,
   GripVertical,
   Braces,
   Settings2
@@ -80,23 +79,33 @@ export const VisualBuilder: React.FC<VisualBuilderProps> = ({ data, onChange }) 
     });
   };
 
-  const fields = React.useMemo(() => transformFromJSON(data), [data]);
+  const [fields, setFields] = React.useState<ConfigField[]>(() => transformFromJSON(data));
+  const lastEmittedData = React.useRef<any>(data);
+
+  React.useEffect(() => {
+    if (data !== lastEmittedData.current) {
+      setFields(transformFromJSON(data));
+      lastEmittedData.current = data;
+    }
+  }, [data]);
 
   const updateFields = (newFields: ConfigField[]) => {
-    onChange(transformToJSON(newFields));
+    setFields(newFields);
+    const newJson = transformToJSON(newFields);
+    lastEmittedData.current = newJson;
+    onChange(newJson);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <FieldList 
         fields={fields} 
         onUpdate={updateFields} 
         level={0} 
       />
       
-      <Button 
-        variant="ghost" 
-        className="w-full border-2 border-dashed border-border hover:border-link hover:bg-link/5 text-muted-foreground hover:text-link py-8 rounded-xl transition-all group flex flex-col gap-2 h-auto"
+      <button 
+        className="w-full border-2 border-dashed border-[#e5e5e5] hover:border-black hover:bg-[#f5f5f5] text-[#737373] hover:text-black py-8 rounded-2xl transition-all group flex flex-col gap-3 h-auto shadow-none items-center justify-center"
         onClick={() => updateFields([...fields, {
           id: Math.random().toString(36).substr(2, 9),
           key: '',
@@ -105,11 +114,11 @@ export const VisualBuilder: React.FC<VisualBuilderProps> = ({ data, onChange }) 
           isOpen: true
         }])}
       >
-        <div className="w-8 h-8 rounded bg-secondary hairline flex items-center justify-center group-hover:scale-110 transition-transform">
-          <Plus className="w-4 h-4" />
+        <div className="w-10 h-10 rounded-full bg-white border border-[#e5e5e5] flex items-center justify-center group-hover:scale-110 group-hover:bg-black group-hover:text-white transition-all text-black shadow-sm">
+          <Plus className="w-5 h-5" />
         </div>
-        <span className="text-[11px] font-bold uppercase tracking-[0.08em]">Add New Field</span>
-      </Button>
+        <span className="text-xs font-bold uppercase tracking-widest">Add Root Field</span>
+      </button>
     </div>
   );
 };
@@ -130,8 +139,8 @@ const FieldList: React.FC<FieldListProps> = ({ fields, onUpdate, level }) => {
   };
 
   return (
-    <div className={`space-y-3 ${level > 0 ? 'ml-6 pl-6 border-l-2 border-border' : ''}`}>
-      {fields.map((field) => (
+    <div className={`space-y-3 ${level > 0 ? 'ml-6 pl-4 border-l-2 border-[#e5e5e5] relative' : ''}`}>
+      {fields.map((field, index) => (
         <FieldItem 
           key={field.id} 
           field={field} 
@@ -176,48 +185,49 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, onChange, onDelete, level 
     <motion.div 
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group"
+      className="group/item relative"
     >
-      <div className="flex items-center gap-3 bg-card hairline rounded-xl p-3 hover:bg-secondary/30 transition-all card-shadow">
-        <div className="cursor-grab text-muted-foreground/30 hover:text-muted-foreground transition-colors shrink-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white border border-[#e5e5e5] rounded-2xl p-2 pr-3 hover:border-black/20 hover:shadow-md transition-all shadow-sm">
+        
+        <div className="cursor-grab p-2 rounded-lg text-[#b0b0b0] hover:text-black hover:bg-[#f5f5f5] transition-all shrink-0 self-center opacity-0 group-hover/item:opacity-100" title="Drag to reorder">
           <GripVertical className="w-4 h-4" />
         </div>
 
-        <div className="flex-1 flex gap-3 items-center min-w-0">
-          <div className="w-[180px] shrink-0">
+        <div className="flex-1 flex flex-col sm:flex-row gap-3 items-start sm:items-center min-w-0 w-full sm:w-auto">
+          <div className="w-full sm:w-[200px] shrink-0">
             <Input 
               value={field.key}
               onChange={(e) => onChange({ key: e.target.value })}
               placeholder="property_name"
-              className="h-9 bg-background border-border focus-visible:ring-link font-mono text-xs rounded-md"
+              className="h-10 w-full bg-transparent border-transparent hover:border-[#e5e5e5] focus-visible:bg-[#f5f5f5] focus-visible:border-black font-mono text-sm shadow-none rounded-xl text-black font-bold px-3"
             />
           </div>
 
-          <div className="w-28 shrink-0">
+          <div className="w-full sm:w-[140px] shrink-0">
             <Select value={field.type} onValueChange={(v) => handleTypeChange(v as ConfigValueType)}>
-              <SelectTrigger className="h-9 bg-background border-border text-[10px] font-bold uppercase tracking-widest px-3">
-                <div className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5 text-link" />
+              <SelectTrigger className="h-10 w-full bg-transparent border-transparent hover:border-[#e5e5e5] focus-visible:ring-0 text-[11px] font-bold uppercase tracking-widest px-3 shadow-none rounded-xl">
+                <div className="flex items-center gap-2 text-[#737373]">
+                  <Icon className="w-4 h-4" />
                   <SelectValue />
                 </div>
               </SelectTrigger>
-              <SelectContent className="bg-popover border-border rounded-lg">
-                <SelectItem value="string" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">STRING</SelectItem>
-                <SelectItem value="number" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">NUMBER</SelectItem>
-                <SelectItem value="boolean" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">BOOLEAN</SelectItem>
-                <SelectItem value="object" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">OBJECT</SelectItem>
-                <SelectItem value="array" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">ARRAY</SelectItem>
+              <SelectContent className="bg-white border-[#e5e5e5] rounded-xl shadow-lg">
+                {['string', 'number', 'boolean', 'object', 'array'].map((t) => (
+                  <SelectItem key={t} value={t} className="text-[11px] uppercase font-bold tracking-widest text-[#737373] focus:text-black focus:bg-[#f5f5f5] cursor-pointer">
+                    {t.toUpperCase()}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             {field.type === 'string' && (
               <Input 
                 value={field.value}
                 onChange={(e) => onChange({ value: e.target.value })}
                 placeholder="value"
-                className="h-9 bg-secondary/50 border-transparent focus-visible:border-link text-xs text-foreground rounded-md placeholder:text-muted-foreground/30"
+                className="h-10 w-full bg-[#f5f5f5]/50 border-transparent hover:border-[#e5e5e5] focus-visible:border-black focus-visible:bg-white text-sm text-black rounded-xl shadow-none placeholder:text-[#b0b0b0] transition-colors font-medium px-3"
               />
             )}
             {field.type === 'number' && (
@@ -225,44 +235,43 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, onChange, onDelete, level 
                 type="number"
                 value={field.value}
                 onChange={(e) => onChange({ value: Number(e.target.value) })}
-                className="h-9 bg-secondary/50 border-transparent focus-visible:border-link text-xs text-foreground rounded-md"
+                className="h-10 w-full bg-[#f5f5f5]/50 border-transparent hover:border-[#e5e5e5] focus-visible:border-black focus-visible:bg-white text-sm text-black rounded-xl shadow-none transition-colors font-medium px-3"
               />
             )}
             {field.type === 'boolean' && (
-              <div className="flex items-center gap-3 px-2">
+              <div className="flex items-center gap-3 px-4 h-10 bg-[#f5f5f5]/60 rounded-xl w-fit border border-transparent">
                 <Switch 
                   checked={field.value}
                   onCheckedChange={(v) => onChange({ value: v })}
                 />
-                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                <span className={`text-[11px] uppercase font-bold tracking-widest ${field.value ? 'text-black' : 'text-[#737373]'}`}>
                   {field.value ? 'Enabled' : 'Disabled'}
                 </span>
               </div>
             )}
             {(field.type === 'object' || field.type === 'array') && (
-              <Button 
-                variant="ghost" 
-                size="sm"
+              <button 
                 onClick={() => onChange({ isOpen: !field.isOpen })}
-                className="h-9 hover:bg-secondary flex items-center gap-2 px-3 rounded-md transition-colors"
+                className="h-10 hover:bg-[#f5f5f5] flex items-center gap-2 px-4 rounded-xl transition-colors text-[#737373] hover:text-black w-full sm:w-auto"
               >
-                {field.isOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/60" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" />}
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {field.isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                <span className="text-[11px] font-bold uppercase tracking-widest">
                   {Array.isArray(field.value) ? field.value.length : 0} {field.type === 'array' ? 'Elements' : 'Keys'}
                 </span>
-              </Button>
+              </button>
             )}
           </div>
         </div>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onDelete}
-          className="h-8 w-8 text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/5 rounded-md transition-all opacity-0 group-hover:opacity-100 shrink-0"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="absolute top-2 right-2 sm:relative sm:top-auto sm:right-auto opacity-100 sm:opacity-0 group-hover/item:opacity-100 transition-opacity">
+          <button 
+            onClick={onDelete}
+            className="h-8 w-8 sm:h-9 sm:w-9 text-[#b0b0b0] hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shrink-0 flex items-center justify-center"
+            title="Delete Field"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -271,19 +280,18 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, onChange, onDelete, level 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
+            className="overflow-hidden relative"
           >
-            <div className="py-3">
+            <div className="absolute left-[18px] top-0 bottom-6 w-px bg-border/40 z-0" />
+            <div className="py-3 pl-8 relative z-10">
               <FieldList 
                 fields={Array.isArray(field.value) ? field.value : []}
                 onUpdate={(newSubFields) => onChange({ value: newSubFields })}
                 level={level + 1}
               />
-              <div className={`${level === 0 ? 'ml-12 pr-6' : 'ml-6 pl-6 pr-6'}`}>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="mt-2 w-full text-[11px] font-semibold text-link hover:bg-link/5 h-9 rounded-md justify-start px-4 transition-colors"
+              <div className="mt-4">
+                <button 
+                  className="w-full flex items-center justify-center gap-2 border border-dashed border-[#e5e5e5] text-[11px] font-bold uppercase tracking-widest text-[#737373] hover:border-black hover:text-black hover:bg-[#f5f5f5] h-10 rounded-xl transition-all"
                   onClick={() => onChange({ 
                     value: [...(Array.isArray(field.value) ? field.value : []), {
                       id: Math.random().toString(36).substr(2, 9),
@@ -296,7 +304,7 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, onChange, onDelete, level 
                 >
                   <Plus className="w-3.5 h-3.5 mr-2" />
                   Add Sub-Item
-                </Button>
+                </button>
               </div>
             </div>
           </motion.div>

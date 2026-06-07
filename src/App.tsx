@@ -11,6 +11,7 @@ import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { Layout } from './layouts/Layout';
 import { useState } from 'react';
+import ScrollToTop from './components/ScrollToTop';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, isLoading } = useGitHub();
@@ -26,59 +27,72 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function RepoRoute({ editorState, setEditorState }: any) {
   const location = useLocation();
+  const navigate = useNavigate();
   const repo = location.state?.repo;
+  const searchParams = new URLSearchParams(location.search);
+  const initialPath = searchParams.get('file');
 
   if (!repo) {
     return <Navigate to="/dashboard" replace />;
   }
 
   return (
-    <Editor 
-      repo={repo} 
-      initialPath={null} 
-      onBack={() => setEditorState(null)} 
+    <Editor
+      repo={repo}
+      initialPath={initialPath}
+      onBack={() => {
+        setEditorState(null);
+        navigate('/dashboard');
+      }}
     />
   );
 }
 
 function AppContent() {
   const [editorState, setEditorState] = useState<{ repo: any; path: string | null } | null>(null);
-  const noop = () => {};
+  const noop = () => { };
+  const navigate = useNavigate();
 
   return (
-    <Routes>
-      {/* Public routes with nav layout */}
-      <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/docs" element={<Docs />} />
-        <Route path="/privacy" element={<Privacy onNavigate={noop} />} />
-        <Route path="/terms" element={<Terms onNavigate={noop} />} />
-      </Route>
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Public routes with nav layout */}
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/privacy" element={<Privacy onNavigate={noop} />} />
+          <Route path="/terms" element={<Terms onNavigate={noop} />} />
+        </Route>
 
-      {/* Auth — no layout chrome */}
-      <Route path="/register" element={<Login />} />
+        {/* Auth — no layout chrome */}
+        <Route path="/register" element={<Login />} />
 
-      {/* Protected routes */}
-      <Route element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      }>
-        <Route path="/dashboard" element={
-          <Dashboard onEditFile={(repo, path) => setEditorState({ repo, path })} />
-        } />
-        <Route path="/:username/:repo" element={
-          <RepoRoute editorState={editorState} setEditorState={setEditorState} />
-        } />
-        <Route path="/editor" element={
-          editorState
-            ? <Editor repo={editorState.repo} initialPath={editorState.path} onBack={() => setEditorState(null)} />
-            : <Navigate to="/dashboard" replace />
-        } />
-      </Route>
+        {/* Protected routes */}
+        <Route element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route path="/dashboard" element={
+            <Dashboard onEditFile={(repo, path) => setEditorState({ repo, path })} />
+          } />
+          <Route path="/:username/:repo" element={
+            <RepoRoute editorState={editorState} setEditorState={setEditorState} />
+          } />
+          <Route path="/editor" element={
+            editorState
+              ? <Editor repo={editorState.repo} initialPath={editorState.path} onBack={() => {
+                  setEditorState(null);
+                  navigate('/dashboard');
+                }} />
+              : <Navigate to="/dashboard" replace />
+          } />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

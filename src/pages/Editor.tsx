@@ -121,7 +121,17 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
   const loadFiles = async () => {
     try {
       const data = await service?.getContents(selectedRepo.owner.login, selectedRepo.name, '', selectedBranch);
-      setFiles(Array.isArray(data) ? data.filter((f: any) => f.name.endsWith('.json')) : []);
+      const fetchedFiles = Array.isArray(data) ? data.filter((f: any) => f.name.endsWith('.json')) : [];
+      setFiles(fetchedFiles);
+
+      if (initialPath) {
+        const found = fetchedFiles.find((f: any) => f.path === initialPath || f.name === initialPath);
+        if (found && !currentFile) {
+          handleFileSelect(found);
+        } else if (!found && !currentFile) {
+          setNewFilePath(initialPath);
+        }
+      }
     } catch (err) {
       toast.error('Failed to load files');
     }
@@ -222,108 +232,112 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
   };
 
   return (
-    <div className="h-full flex flex-col bg-background overflow-hidden relative z-10">
+    <div className="h-[calc(100vh-73px)] flex flex-col bg-[#fafafa] overflow-hidden relative z-10" style={{ fontFamily: 'DM Sans, sans-serif' }}>
       {/* Editor Header / Breadcrumbs */}
-      <div className="h-16 shrink-0 border-b border-border flex items-center justify-between px-8 bg-background/80 backdrop-blur-md z-20 sticky top-0">
+      <div className="h-16 shrink-0 border-b border-[#e5e5e5] flex items-center justify-between px-6 lg:px-8 bg-white z-20 sticky top-0">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <button 
             onClick={onBack} 
-            className="h-10 hover:bg-secondary text-muted-foreground flex items-center gap-2 font-medium"
+            className="h-10 px-4 rounded-xl hover:bg-[#f5f5f5] text-[#737373] hover:text-black flex items-center gap-2 font-bold transition-all text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             Dashboard
-          </Button>
-          <div className="w-px h-4 bg-border" />
-          <div className="flex flex-col">
-            <h1 className="text-sm font-semibold text-foreground flex items-center gap-2 truncate max-w-[200px]">
-              <FileJson className="w-4 h-4 text-link" />
+          </button>
+          <div className="w-px h-5 bg-[#e5e5e5]" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#f5f5f5] border border-[#e5e5e5] flex items-center justify-center">
+              <FileJson className="w-4 h-4 text-black" />
+            </div>
+            <h1 className="text-sm font-bold text-black truncate max-w-[250px]">
               {currentFile?.name || 'New Configuration'}
             </h1>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-md hairline text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-            <GitBranch className="w-3 h-3" />
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#f5f5f5] border border-[#e5e5e5] rounded-lg text-[11px] font-bold text-black uppercase tracking-widest">
+            <GitBranch className="w-3.5 h-3.5" />
             {selectedBranch}
           </div>
-          <Button 
+          <button 
             onClick={handleSave} 
             disabled={isSaving}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 font-medium px-6 h-10 rounded-md transition-all active:scale-95"
+            className="btn-primary gap-2 h-10 px-6"
           >
             {isSaving ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Changes
-          </Button>
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-8 p-8 max-w-[1400px] mx-auto w-full">
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-[1440px] mx-auto w-full">
         {/* Left Side: Context & File Browser */}
-        <div className="lg:w-[320px] shrink-0 flex flex-col gap-6">
+        <div className="lg:w-[300px] xl:w-[320px] shrink-0 flex flex-col gap-6">
           <div className="space-y-6">
+            {/* Repository Info */}
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-2 block">Identity</label>
-              <div className="p-4 bg-secondary/30 hairline rounded-md">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded bg-card hairline flex items-center justify-center">
-                    <Github className="w-4 h-4 text-muted-foreground" />
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-3 block ml-1">Repository</label>
+              <div className="p-4 bg-white border border-[#e5e5e5] rounded-2xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#f5f5f5] border border-[#e5e5e5] flex items-center justify-center shrink-0">
+                    <Github className="w-5 h-5 text-black" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{selectedRepo?.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{selectedRepo?.owner.login}</p>
+                    <p className="text-sm font-bold text-black truncate">{selectedRepo?.name}</p>
+                    <p className="text-xs text-[#737373] truncate">{selectedRepo?.owner.login}</p>
                   </div>
                 </div>
                 <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger className="h-9 bg-card hairline text-xs font-medium">
+                  <SelectTrigger className="h-10 bg-[#f5f5f5] border-[#e5e5e5] text-xs font-semibold text-black rounded-xl">
                     <SelectValue placeholder="Branch" />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
+                  <SelectContent className="bg-white border-[#e5e5e5] rounded-xl shadow-lg">
                     {branches.map(b => (
-                      <SelectItem key={b.name} value={b.name}>{b.name}</SelectItem>
+                      <SelectItem key={b.name} value={b.name} className="font-medium text-sm">{b.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div>
-              <label className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-2 block">Configurations</label>
-              <div className="space-y-1">
-                {files.length > 0 ? (
-                  files.map(file => (
-                    <button
-                      key={file.sha}
-                      onClick={() => handleFileSelect(file)}
-                      className={`w-full flex items-center gap-3 p-2.5 rounded-md transition-all text-left ${
-                        currentFile?.sha === file.sha 
-                          ? 'bg-secondary text-foreground font-semibold' 
-                          : 'text-muted-foreground hover:bg-secondary/50'
-                      }`}
-                    >
-                      <FileJson className={`w-4 h-4 shrink-0 ${currentFile?.sha === file.sha ? 'text-link' : ''}`} />
-                      <span className="text-sm font-medium truncate">{file.name}</span>
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground italic p-2">No JSON files found.</p>
-                )}
+            {/* Configurations List */}
+            <div className="flex-1 flex flex-col min-h-[300px]">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-3 block ml-1">Configurations</label>
+              <div className="bg-white border border-[#e5e5e5] rounded-2xl shadow-sm p-2 flex flex-col flex-1">
+                <ScrollArea className="flex-1 -mx-2 px-2">
+                  <div className="space-y-1">
+                    {files.length > 0 ? (
+                      files.map(file => (
+                        <button
+                          key={file.sha}
+                          onClick={() => handleFileSelect(file)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group ${
+                            currentFile?.sha === file.sha 
+                              ? 'bg-black text-white font-bold shadow-md' 
+                              : 'text-[#737373] hover:bg-[#f5f5f5] hover:text-black font-semibold'
+                          }`}
+                        >
+                          <FileJson className={`w-4 h-4 shrink-0 ${currentFile?.sha === file.sha ? 'text-white' : 'group-hover:text-black'}`} />
+                          <span className="text-sm truncate">{file.name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-xs text-[#737373] italic p-4 text-center">No JSON files found.</p>
+                    )}
+                  </div>
+                </ScrollArea>
                 
-                <div className="pt-2">
-                  <div className="flex gap-2 p-1 bg-secondary/30 hairline rounded-md items-center">
-                    <Plus className="w-4 h-4 text-muted-foreground/40 ml-2" />
-                    <Input 
-                      placeholder="Add filename.json" 
-                      className="h-10 bg-transparent border-none text-xs focus-visible:ring-0  px-4 rounded-md"
+                <div className="pt-2 mt-2 border-t border-[#e5e5e5] shrink-0">
+                  <div className="flex gap-2 p-1.5 bg-[#f5f5f5] rounded-xl items-center focus-within:ring-2 ring-black/10 transition-all border border-transparent focus-within:border-[#e5e5e5]">
+                    <Plus className="w-4 h-4 text-[#737373] ml-2 shrink-0" />
+                    <input 
+                      placeholder="filename.json" 
+                      className="h-8 w-full bg-transparent border-none text-xs font-semibold text-black placeholder:text-[#737373]/50 focus:outline-none"
                       value={newFilePath}
                       onChange={(e) => setNewFilePath(e.target.value)}
                     />
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-7 w-7 p-0 hover:bg-card rounded"
+                    <button 
+                      className="h-8 w-8 shrink-0 flex items-center justify-center bg-white hover:bg-black hover:text-white text-black rounded-lg border border-[#e5e5e5] transition-all"
                       onClick={() => {
                         setCurrentFile(null);
                         setConfigData({});
@@ -331,71 +345,70 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
                       }}
                     >
                       <ChevronRight className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-muted/40 rounded-md">
-              <h4 className="text-[11px] font-bold uppercase tracking-[0.08em] text-foreground mb-2 flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
+            <div className="p-5 bg-[#d4f57a]/20 border border-[#d4f57a]/40 rounded-2xl">
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-black mb-2 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#84cc16]" />
                 Validated Workflow
               </h4>
-              <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
-                Your changes are validated against the current schema before deployment.
+              <p className="text-xs text-black/70 leading-relaxed font-medium">
+                Changes are saved directly to your GitHub repository.
               </p>
             </div>
           </div>
         </div>
 
         {/* Builder / Code Surface */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
-          <Card className="flex-1 bg-card hairline rounded-lg overflow-hidden flex flex-col card-shadow">
-            <div className="h-14 border-b border-border flex items-center justify-between px-6 bg-secondary/30 shrink-0">
+        <div className="flex-1 min-w-0 flex flex-col gap-6 relative">
+          <div className="flex-1 bg-white border border-[#e5e5e5] rounded-3xl overflow-hidden flex flex-col shadow-sm">
+            <div className="h-16 border-b border-[#e5e5e5] flex items-center justify-between px-6 bg-[#f5f5f5]/50 shrink-0">
               <div className="flex items-center gap-4">
-                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="bg-muted p-0.5 rounded-md h-8">
-                  <TabsList className="bg-transparent border-none h-full">
-                    <TabsTrigger value="visual" className="h-7 text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm px-4 transition-all" onClick={() => setRawJson(JSON.stringify(configData, null, 2))}>Visual</TabsTrigger>
-                    <TabsTrigger value="code" className="h-7 text-[10px] uppercase font-bold tracking-widest data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm px-4 transition-all" onClick={() => setRawJson(JSON.stringify(configData, null, 2))}>Raw JSON</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div className="bg-[#e5e5e5]/50 p-1 rounded-xl flex items-center border border-[#e5e5e5]">
+                  <button
+                    onClick={() => setViewMode('visual')}
+                    className={`h-8 px-4 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all ${viewMode === 'visual' ? 'bg-white text-black shadow-sm border border-[#e5e5e5]' : 'text-[#737373] hover:text-black'}`}
+                  >
+                    Visual Builder
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRawJson(JSON.stringify(configData, null, 2));
+                      setViewMode('code');
+                    }}
+                    className={`h-8 px-4 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all ${viewMode === 'code' ? 'bg-white text-black shadow-sm border border-[#e5e5e5]' : 'text-[#737373] hover:text-black'}`}
+                  >
+                    Raw JSON
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="h-8 text-[10px] uppercase font-bold tracking-widest gap-2 bg-secondary/50 border-border"
+                <button 
+                  className="h-9 px-4 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 bg-white border border-[#e5e5e5] rounded-lg hover:border-black/20 transition-all text-black shadow-sm"
                   onClick={() => setIsPresetsOpen(true)}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Presets
-                </Button>
-                <div className="flex items-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-link animate-pulse' : 'bg-green-500'}`} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                </button>
+                <div className="hidden md:flex items-center gap-2 px-3">
+                  <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-black animate-pulse' : 'bg-[#84cc16]'}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373]">
                     {isSyncing ? 'Syncing...' : 'Status: Draft'}
                   </span>
                 </div>
-                {currentFile && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 text-[11px] font-semibold text-link hover:bg-link/5 hover:text-link px-3 gap-2"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    Restore
-                  </Button>
-                )}
               </div>
             </div>
 
-            <div className="flex-1 relative overflow-hidden">
+            <div className="flex-1 relative overflow-hidden bg-white">
               {isLoadingFile ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-20">
-                  <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin" />
-                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Pulling Data...</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+                  <div className="w-12 h-12 border-4 border-[#f5f5f5] border-t-black rounded-full animate-spin" />
+                  <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-[#737373]">Pulling Data...</p>
                 </div>
               ) : (
                 <div className="h-full flex flex-col">
@@ -408,13 +421,13 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              className="absolute inset-x-0 top-0 h-1 bg-link/30 z-10 overflow-hidden"
+                              className="absolute inset-x-0 top-0 h-1 bg-[#d4f57a] z-10 overflow-hidden"
                             >
                               <motion.div 
                                 initial={{ x: '-100%' }}
                                 animate={{ x: '100%' }}
                                 transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                                className="h-full w-1/3 bg-link"
+                                className="h-full w-1/3 bg-black"
                               />
                             </motion.div>
                           )}
@@ -424,39 +437,54 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
                           onChange={handleConfigChange} 
                         />
                         {Object.keys(configData).length === 0 && (
-                          <div className="flex flex-col items-center justify-center text-center p-12 mt-12 bg-muted/20 rounded-md hairline border-dashed">
-                            <Plus className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                            <h3 className="text-xl font-semibold text-foreground mb-2 tracking-tight">Empty Manifest</h3>
-                            <p className="text-sm text-muted-foreground">Start adding keys to your new configuration using the builder.</p>
+                          <div className="flex flex-col items-center justify-center text-center p-16 mt-8 bg-[#f5f5f5] rounded-3xl border-2 border-dashed border-[#e5e5e5]">
+                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-[#e5e5e5] mb-6 shadow-sm">
+                              <Plus className="w-8 h-8 text-[#e5e5e5]" />
+                            </div>
+                            <h3 className="text-xl font-bold text-black mb-2">Empty Configuration</h3>
+                            <p className="text-sm text-[#737373] max-w-sm">Start adding keys to your new configuration using the visual builder or apply a preset.</p>
                           </div>
                         )}
                       </div>
                     </ScrollArea>
                   ) : (
-                    <div className="flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col">
-                      <div className="h-10 border-b border-white/5 flex items-center justify-between px-4 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Code className="w-3.5 h-3.5 text-link" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">JSON Editor</span>
+                    <div className="flex-1 bg-[#0a0a0a] overflow-hidden flex flex-col rounded-2xl m-6 shadow-lg relative border border-black/10">
+                      <div className="h-12 border-b border-white/10 flex items-center justify-between px-4 bg-[#111111]">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 ml-1">
+                            <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                            <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                          </div>
+                          <div className="w-px h-4 bg-white/10 mx-2" />
+                          <Code className="w-4 h-4 text-[#d4f57a]" />
+                          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-white/70">Raw Configuration</span>
                         </div>
                         <button 
                           onClick={() => {
                             navigator.clipboard.writeText(rawJson);
                             toast.success('JSON Copied');
                           }}
-                          className="text-[10px] font-bold uppercase tracking-widest text-[#999999] hover:text-white transition-colors"
+                          className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg"
                         >
                           Copy Payload
                         </button>
                       </div>
                       <ScrollArea className="flex-1 custom-scrollbar">
-                        <div className="relative min-h-full">
-                          <Textarea 
-                            value={rawJson}
-                            onChange={(e) => handleRawJsonChange(e.target.value)}
-                            className="absolute inset-0 w-full h-full p-8 font-mono text-sm leading-relaxed text-link bg-transparent border-none resize-none focus-visible:ring-0 selection:bg-link/20 min-h-[500px]"
-                            spellCheck={false}
-                          />
+                        <div className="flex min-h-full">
+                          <div className="w-12 bg-[#0d1117] border-r border-white/5 py-6 flex flex-col items-center select-none opacity-50 font-mono text-xs text-white/40 shrink-0">
+                            {Array.from({ length: Math.max(rawJson.split('\n').length, 1) }).map((_, i) => (
+                              <div key={i} className="leading-6 h-6">{i + 1}</div>
+                            ))}
+                          </div>
+                          <div className="relative flex-1">
+                            <Textarea 
+                              value={rawJson}
+                              onChange={(e) => handleRawJsonChange(e.target.value)}
+                              className="absolute inset-0 w-full h-full p-6 py-6 font-mono text-[14px] leading-relaxed text-[#d4f57a] bg-transparent border-none resize-none focus-visible:ring-0 selection:bg-[#d4f57a]/20 min-h-[500px]"
+                              spellCheck={false}
+                            />
+                          </div>
                         </div>
                       </ScrollArea>
                     </div>
@@ -465,50 +493,51 @@ export const Editor: React.FC<EditorProps> = ({ repo: initialRepo, initialPath, 
               )}
             </div>
             
-            <div className="px-6 h-12 bg-secondary/30 border-t border-border flex items-center justify-between shrink-0">
+            <div className="px-6 h-12 bg-[#f5f5f5]/50 border-t border-[#e5e5e5] flex items-center justify-between shrink-0">
                <div className="flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                 <p className="text-[11px] font-semibold text-muted-foreground">Safe Mode Enabled</p>
+                 <div className="w-2 h-2 rounded-full bg-[#84cc16]" />
+                 <p className="text-[11px] font-bold uppercase tracking-widest text-black">Safe Mode Enabled</p>
                </div>
-               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                 <span>Schema V2.4</span>
+               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-[#737373]">
+                 <span>Schema Validated</span>
                  <span>{Object.keys(configData).length} Fields</span>
                </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
       {/* Presets Dialog */}
       <Dialog open={isPresetsOpen} onOpenChange={setIsPresetsOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Configuration Presets</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="bg-white border-[#e5e5e5] sm:max-w-[500px] rounded-3xl p-0 overflow-hidden shadow-2xl">
+          <DialogHeader className="p-6 pb-4 border-b border-[#e5e5e5] bg-[#fafafa]">
+            <DialogTitle className="text-xl font-bold text-black">Configuration Presets</DialogTitle>
+            <DialogDescription className="text-sm text-[#737373] mt-2">
               Choose a template to quickly bootstrap your configuration. This will overwrite your current draft.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-3 p-4 bg-white max-h-[400px] overflow-y-auto">
             {presets.map((preset, idx) => (
               <button
                 key={idx}
                 onClick={() => applyPreset(preset)}
-                className="flex flex-col gap-1 p-4 rounded-lg border border-border bg-secondary/30 hover:bg-secondary/50 transition-all text-left group"
+                className="flex flex-col gap-0 p-4 rounded-2xl border border-[#e5e5e5] bg-white hover:border-black hover:shadow-md transition-all text-left group"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-foreground group-hover:text-link">{preset.name}</span>
-                  <Plus className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-bold text-base text-black">{preset.name}</span>
+                  <div className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all text-[#737373]">
+                    <Plus className="w-4 h-4" />
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">{preset.description}</span>
+                <span className="text-sm text-[#737373] leading-relaxed">{preset.description}</span>
               </button>
             ))}
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsPresetsOpen(false)}>Cancel</Button>
+          <DialogFooter className="pt-0 bg-[#fafafa] border-t border-[#e5e5e5]">
+            <button className="px-6 m-4 py-2 rounded-2xl bg-black/5 hover:bg-black/10 transition-all duration-300 cursor-pointer text-sm font-bold text-[#737373] hover:text-black transition-colors" onClick={() => setIsPresetsOpen(false)}>Cancel</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
-
