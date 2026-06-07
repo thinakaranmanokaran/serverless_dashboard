@@ -44,7 +44,7 @@ export function Layout() {
               { href: '/docs', label: 'Docs' },
               ...(token ? [
                 { href: '/dashboard', label: 'Workspaces' },
-                { href: '/editor', label: 'Editor' },
+                // { href: '/editor', label: 'Editor' },
               ] : []),
             ].map(({ href, label }) => (
               <Link
@@ -75,10 +75,10 @@ export function Layout() {
               </div>
             ) : (
               <>
-                <Link to="/login" className="btn-secondary text-sm !py-2 !px-4 border border-[#e5e5e5]" style={{ fontSize: 14 }}>
+                {/* <Link to="/register" className="btn-secondary text-sm !py-2 !px-4 border border-[#e5e5e5]" style={{ fontSize: 14 }}>
                   Sign in
-                </Link>
-                <Link to="/login" className="btn-primary text-sm !py-2 !px-4" style={{ fontSize: 14 }}>
+                </Link> */}
+                <Link to="/register" className="btn-primary text-sm !py-2 !px-4" style={{ fontSize: 14 }}>
                   Get started free
                 </Link>
               </>
@@ -122,7 +122,7 @@ export function Layout() {
                 { href: '/docs', label: 'Documentation' },
                 ...(token ? [
                   { href: '/dashboard', label: 'Workspaces' },
-                  { href: '/editor', label: 'Editor' },
+                  // { href: '/editor', label: 'Editor' },
                 ] : []),
               ].map(({ href, label }) => (
                 <Link key={href} to={href} onClick={() => setMobileOpen(false)}
@@ -137,8 +137,8 @@ export function Layout() {
                 <button onClick={handleLogout} className="btn-secondary w-full border border-[#e5e5e5]">Sign out</button>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-secondary w-full border border-[#e5e5e5] text-center">Sign in</Link>
-                  <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-primary w-full text-center">Get started free</Link>
+                  <Link to="/register" onClick={() => setMobileOpen(false)} className="btn-secondary w-full border border-[#e5e5e5] text-center">Sign in</Link>
+                  <Link to="/register" onClick={() => setMobileOpen(false)} className="btn-primary w-full text-center">Get started free</Link>
                 </>
               )}
             </div>

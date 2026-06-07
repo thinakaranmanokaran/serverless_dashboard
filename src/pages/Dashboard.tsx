@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGitHub } from '../hooks/useGitHub';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  GitBranch, 
-  Star, 
-  Clock, 
-  Lock, 
-  Globe, 
+import {
+  Search,
+  GitBranch,
+  Star,
+  Clock,
+  Lock,
+  Globe,
   ChevronRight,
   Plus,
   FileJson,
@@ -67,14 +67,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
   const [newFileName, setNewFileName] = useState('');
 
   const filteredRepos = useMemo(() => {
-    return repos.filter(repo => 
+    return repos.filter(repo =>
       repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [repos, searchQuery]);
 
   const modalFilteredRepos = useMemo(() => {
-    return repos.filter(repo => 
+    return repos.filter(repo =>
       repo.name.toLowerCase().includes(repoSearch.toLowerCase())
     );
   }, [repos, repoSearch]);
@@ -114,7 +114,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
       if (service) {
         // We look for JSON files in the root
         const contents = await service.getContents(repo.owner.login, repo.name, '');
-        const jsonFiles = Array.isArray(contents) 
+        const jsonFiles = Array.isArray(contents)
           ? contents.filter((f: any) => f.type === 'file' && f.name.endsWith('.json'))
           : [];
         setRepoFiles(jsonFiles);
@@ -136,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
   };
 
   return (
-    <div className="space-y-12 pb-20 relative z-10">
+    <div className="space-y-12 pb-20 relative z-10 max-w-[1280px] mx-auto">
       <AnimatePresence>
         {bannerError && (
           <motion.div
@@ -145,60 +145,52 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mb-8 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-between gap-4 backdrop-blur-md">
+            <div className="px-6 mt-6 p-4 rounded-2xl bg-[#fef2f2] border border-[#fecaca] flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                <div className="w-10 h-10 rounded-xl bg-[#fee2e2] flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-[#dc2626]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-destructive uppercase tracking-widest">Error Encountered</h4>
-                  <p className="text-xs text-destructive/80 font-medium">{bannerError}</p>
+                  <h4 className="text-sm font-bold text-[#dc2626] uppercase tracking-widest" style={{ fontWeight: 540 }}>Error Encountered</h4>
+                  <p className="text-xs text-[#dc2626] font-medium" style={{ fontWeight: 320 }}>{bannerError}</p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <button
                 onClick={clearError}
-                className="text-destructive hover:bg-destructive/10 h-8 font-bold"
+                className="text-[#dc2626] hover:text-[#b91c1c] transition-colors h-8 font-bold text-sm" style={{ fontWeight: 540 }}
               >
                 Dismiss
-              </Button>
+              </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Welcome Section / Hero Area */}
-      <section className="relative overflow-hidden p-10 rounded-[32px] bg-background border border-border/50 shadow-xl shadow-primary/5">
-        {/* Glow Effects */}
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-link/5 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="px-2 py-0.5 rounded-full bg-link/10 text-link text-[10px] font-bold uppercase tracking-widest border border-link/20">
-                Authorized as {user?.login}
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold text-foreground mb-4 tracking-tight leading-tight">
+      <section className="py-20 px-6 max-w-[1280px] mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-8">
+          <div>
+            <p className="eyebrow text-[#737373] mb-4">Dashboard</p>
+            <h1 className="display-lg text-black mb-6 max-w-2xl">
               Select a repository to get started.
             </h1>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p className="body-lg text-[#3d3d3d] mb-4" style={{ fontWeight: 330 }}>
               Choose one of your GitHub repositories to manage its live configuration files.
             </p>
+            <p className="body-sm text-[#737373] mb-8" style={{ fontWeight: 320 }}>
+              Authorized as <strong style={{ fontWeight: 540 }}>{user?.login}</strong>
+            </p>
           </div>
-          <Button 
-             size="lg"
-             className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-2xl px-8 h-14 font-bold transition-all shrink-0"
-             onClick={() => {
-               resetModal();
-               setIsModalOpen(true);
-             }}
+          <button
+            onClick={() => {
+              resetModal();
+              setIsModalOpen(true);
+            }}
+            className="btn-primary gap-2 shrink-0"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             New Config
-          </Button>
+          </button>
         </div>
       </section>
 
@@ -206,24 +198,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
 
       {/* Recent Repositories */}
       {recentRepos.length > 0 && (
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-link" />
-            <h3 className="text-xl font-semibold text-foreground tracking-tight">Jump Back In</h3>
+        <section className="color-block color-block-lime section-gap max-w-[1280px] mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <Clock className="w-5 h-5 text-black" />
+            <h2 className="headline text-black" style={{ fontSize: 22, fontWeight: 540 }}>Jump Back In</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {recentRepos.map((repo: any) => (
               <button
                 key={repo.id}
                 onClick={() => handleEditFile(repo, null)}
-                className="group p-4 rounded-xl bg-secondary/30 hairline hover:bg-secondary/50 transition-all text-left flex items-center gap-3"
+                className="group p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-all text-left flex items-center gap-3 border border-black/10"
               >
-                <div className="w-10 h-10 rounded-lg bg-background text-muted-foreground flex items-center justify-center shrink-0 border border-border group-hover:border-link/30 group-hover:text-link transition-all">
+                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 border border-black/10 group-hover:bg-black group-hover:text-white transition-all">
                   <Github className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate text-foreground group-hover:text-link transition-colors">{repo.name}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{repo.owner.login}</p>
+                  <p className="body-sm font-semibold truncate text-black group-hover:text-black transition-colors" style={{ fontWeight: 540 }}>{repo.name}</p>
+                  <p className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>{repo.owner.login}</p>
                 </div>
               </button>
             ))}
@@ -232,57 +224,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
       )}
 
       {/* Your Repositories */}
-      <div className="space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="space-y-8 max-w-[1280px] mx-auto">
+        <div className="px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <h3 className="text-2xl font-semibold text-foreground tracking-tight">Your Repositories</h3>
+            <div className="w-1.5 h-6 bg-black rounded-full" />
+            <h2 className="display-lg text-black" style={{ fontSize: 28, fontWeight: 540 }}>Your Repositories</h2>
+            {/* Show the count */}
+            <div className="body-sm text-[#737373] px-2" style={{ fontWeight: 320 }}>{repos.length}</div>
           </div>
-          
+
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full text-muted-foreground hover:bg-secondary"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-[#737373] hover:bg-[#f5f5f5] h-10 w-10"
               onClick={() => setIsHelpOpen(true)}
             >
               <HelpCircle className="w-5 h-5" />
             </Button>
             <div className="relative flex-1 md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Filter repositories..." 
-                className="pl-10 bg-secondary border-border text-foreground h-10 rounded-md focus:border-muted-foreground/30 transition-all placeholder:text-muted-foreground/50"
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737373]" />
+              <Input
+                placeholder="Filter repositories..."
+                className="pl-10 bg-[#f5f5f5] border border-[#e5e5e5] text-black h-10 rounded-lg focus:border-black/20 transition-all placeholder:text-[#737373]/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
-            
-            <div className="flex p-1 bg-secondary rounded-md hairline shrink-0">
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded transition-all ${viewMode === 'grid' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded transition-all ${viewMode === 'list' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                <List className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-48 w-full bg-secondary rounded-2xl" />
+              <Skeleton key={i} className="h-48 w-full bg-[#f5f5f5] rounded-2xl" />
             ))}
           </div>
         ) : filteredRepos.length > 0 ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
+          <div className="px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredRepos.map((repo: any, i: number) => (
               <motion.div
                 key={repo.id}
@@ -290,182 +269,173 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
               >
-                <Card 
-                  className={`bg-card hairline hover:hairline-strong transition-all cursor-pointer group shadow-sm hover:card-shadow ${viewMode === 'list' ? 'flex flex-row items-center p-4' : 'h-full flex flex-col'}`}
+                <motion.button
+                  whileHover={{ y: -3 }}
                   onClick={() => handleEditFile(repo, null)}
+                  className="w-full p-6 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-all text-left flex flex-col h-full"
                 >
-                  <CardContent className={`p-0 ${viewMode === 'list' ? 'flex-1 flex items-center justify-between' : 'p-6 flex-1 flex flex-col'}`}>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-secondary rounded-md flex items-center justify-center border border-border group-hover:bg-secondary/80 transition-all">
-                          <Github className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground group-hover:text-link transition-colors truncate max-w-[200px] text-lg leading-tight">{repo.name}</h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.08em]">
-                              {repo.private ? <Lock className="w-2.5 h-2.5" /> : <Globe className="w-2.5 h-2.5" />}
-                              {repo.private ? 'Private' : 'Public'}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-10 h-10 bg-[#f5f5f5] rounded-lg flex items-center justify-center border border-[#e5e5e5] group-hover:bg-black group-hover:text-white transition-all">
+                        <Github className="w-5 h-5" />
                       </div>
-                      
-                      {viewMode === 'grid' && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-[40px]">
-                          {repo.description || 'No description provided for this repository.'}
-                        </p>
-                      )}
+                      <div className="flex-1">
+                        <p className="headline text-black truncate" style={{ fontSize: 17, fontWeight: 540 }}>{repo.name}</p>
+                        <span className="text-[10px] text-black/50 uppercase tracking-widest" style={{ fontWeight: 320 }}>
+                          {repo.private ? 'Private' : 'Public'}
+                        </span>
+                      </div>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-[#e5e5e5] group-hover:text-black group-hover:translate-x-1 transition-all" />
+                  </div>
 
-                    <div className={`${viewMode === 'grid' ? 'mt-auto pt-6 flex items-center justify-between border-t border-border' : 'flex items-center gap-8'}`}>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Star className="w-3.5 h-3.5" />
-                          {repo.stargazers_count}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Clock className="w-3.5 h-3.5" />
-                          {new Date(repo.updated_at).toLocaleDateString()}
-                        </div>
+                  <p className="body-sm text-[#737373] line-clamp-2 leading-relaxed min-h-[40px] mb-4 flex-1" style={{ fontWeight: 320 }}>
+                    {repo.description || 'No description provided for this repository.'}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-[#e5e5e5]">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-[#737373]" style={{ fontWeight: 320 }}>
+                        <Star className="w-3.5 h-3.5" />
+                        {repo.stargazers_count}
                       </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-foreground group-hover:translate-x-1 transition-all" />
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-[#737373]" style={{ fontWeight: 320 }}>
+                        <Clock className="w-3.5 h-3.5" />
+                        {new Date(repo.updated_at).toLocaleDateString()}
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </motion.button>
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="h-64 flex flex-col items-center justify-center bg-secondary border-2 border-dashed border-border rounded-[24px] p-10 text-center">
-            <div className="w-16 h-16 bg-card rounded-full border border-border flex items-center justify-center mb-6">
-              <Search className="w-8 h-8 text-muted-foreground/30" />
+          <div className="px-6 h-64 flex flex-col items-center justify-center bg-[#f5f5f5] border-2 border-dashed border-[#e5e5e5] rounded-[24px] p-10 text-center">
+            <div className="w-16 h-16 bg-white rounded-full border border-[#e5e5e5] flex items-center justify-center mb-6">
+              <Search className="w-8 h-8 text-[#e5e5e5]" />
             </div>
-            <h4 className="text-xl font-semibold text-foreground mb-2">No matching repositories</h4>
-            <p className="text-muted-foreground">Try adjusting your search filters or check your account permissions.</p>
+            <h4 className="headline text-black mb-2" style={{ fontSize: 20, fontWeight: 540 }}>No matching repositories</h4>
+            <p className="body-sm text-[#737373]" style={{ fontWeight: 320 }}>Try adjusting your search filters or check your account permissions.</p>
           </div>
         )}
       </div>
       {/* New Configuration Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-card border-border">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-white border border-[#e5e5e5] rounded-3xl">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="headline text-black" style={{ fontSize: 22, fontWeight: 540 }}>
               {modalStep === 'repo' ? 'Select Repository' : modalStep === 'file' ? 'Select Configuration File' : 'Name Your Configuration'}
             </DialogTitle>
-            <DialogDescription>
-              {modalStep === 'repo' 
-                ? 'Choose a repository to manage its configurations.' 
+            <DialogDescription className="body-sm text-[#737373] mt-2" style={{ fontWeight: 320 }}>
+              {modalStep === 'repo'
+                ? 'Choose a repository to manage its configurations.'
                 : modalStep === 'file'
-                ? `Select an existing JSON file in ${selectedRepoForNew?.name} or create a new one.`
-                : `Enter a name for your new configuration file in ${selectedRepoForNew?.name}.`}
+                  ? `Select an existing JSON file in ${selectedRepoForNew?.name} or create a new one.`
+                  : `Enter a name for your new configuration file in ${selectedRepoForNew?.name}.`}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="px-6 py-2 pb-6">
+          <div className="px-6 py-2 pb-6 max-h-[500px] overflow-y-auto">
             {modalStep === 'repo' ? (
               <div className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search your repositories..." 
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#737373]" />
+                  <Input
+                    placeholder="Search your repositories..."
                     value={repoSearch}
                     onChange={(e) => setRepoSearch(e.target.value)}
-                    className="pl-10 h-10 bg-secondary/50 border-border"
+                    className="pl-10 h-10 bg-[#f5f5f5] border border-[#e5e5e5] text-black placeholder:text-[#737373]/50 rounded-lg"
                   />
                 </div>
-                
+
                 <ScrollArea className="h-[300px] -mx-2 px-2">
                   <div className="space-y-1">
                     {modalFilteredRepos.map(repo => (
                       <button
                         key={repo.id}
                         onClick={() => handleRepoSelect(repo)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-secondary transition-all text-left group"
+                        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-[#f5f5f5] transition-all text-left group"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-background hairline flex items-center justify-center text-muted-foreground">
+                          <div className="w-8 h-8 rounded bg-[#f5f5f5] flex items-center justify-center text-[#737373] border border-[#e5e5e5]">
                             <Github className="w-4 h-4" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-foreground">{repo.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{repo.private ? 'Private' : 'Public'}</p>
+                            <p className="body-sm font-semibold text-black" style={{ fontWeight: 540 }}>{repo.name}</p>
+                            <p className="text-[10px] text-[#737373] uppercase tracking-widest" style={{ fontWeight: 320 }}>{repo.private ? 'Private' : 'Public'}</p>
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ChevronRight className="w-4 h-4 text-[#e5e5e5] opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
                   </div>
                 </ScrollArea>
 
-                <div className="pt-2 border-t border-border flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Can't find your repo?</p>
-                  <Button 
-                    variant="link" 
-                    className="text-xs text-link h-auto p-0 gap-1"
+                <div className="pt-2 border-t border-[#e5e5e5] flex items-center justify-between">
+                  <p className="text-xs text-[#737373]" style={{ fontWeight: 320 }}>Can't find your repo?</p>
+                  <button
+                    className="text-xs text-black underline font-semibold gap-1 inline-flex items-center"
                     onClick={() => window.open('https://github.com/new', '_blank')}
                   >
                     Create on GitHub
                     <ExternalLink className="w-3 h-3" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             ) : modalStep === 'file' ? (
               <div className="space-y-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <button
                   onClick={() => setModalStep('repo')}
-                  className="mb-2 -ml-2 text-muted-foreground hover:text-foreground h-8"
+                  className="inline-flex items-center gap-2 text-[#737373] hover:text-black transition-colors body-sm" style={{ fontWeight: 320 }}
                 >
-                  <ArrowRight className="w-3.5 h-3.5 rotate-180 mr-2" />
+                  <ArrowRight className="w-4 h-4 rotate-180" />
                   Back to Repositories
-                </Button>
+                </button>
 
                 {isLoadingFiles ? (
                   <div className="h-48 flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="w-6 h-6 animate-spin text-link" />
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Scanning Repository...</p>
+                    <Loader2 className="w-6 h-6 animate-spin text-black" />
+                    <p className="text-xs font-bold text-[#737373] uppercase tracking-widest" style={{ fontWeight: 540 }}>Scanning Repository...</p>
                   </div>
                 ) : (
                   <ScrollArea className="h-[300px] -mx-2 px-2">
                     <div className="space-y-2">
                       <button
                         onClick={() => setModalStep('name')}
-                        className="w-full flex items-center gap-3 p-4 rounded-xl bg-link/5 border border-link/20 hover:bg-link/10 transition-all text-left group box-border shadow-sm"
+                        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#d4f57a]/10 border border-[#d4f57a]/30 hover:bg-[#d4f57a]/20 transition-all text-left group shadow-sm"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-link/10 flex items-center justify-center text-link">
+                        <div className="w-10 h-10 rounded-lg bg-[#d4f57a]/20 flex items-center justify-center text-black">
                           <FilePlus className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-link">Create New Configuration</p>
-                          <p className="text-xs text-link/70 text-[11px]">Start fresh with a new JSON manifest.</p>
+                          <p className="body-sm font-semibold text-black" style={{ fontWeight: 540 }}>Create New Configuration</p>
+                          <p className="text-xs text-black/60 mt-0.5" style={{ fontWeight: 320 }}>Start fresh with a new JSON manifest.</p>
                         </div>
                       </button>
 
                       <div className="py-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2 ml-1">Existing JSON Files</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#737373] mb-2 ml-1" style={{ fontWeight: 540 }}>Existing JSON Files</p>
                         {repoFiles.length > 0 ? (
                           <div className="space-y-1">
                             {repoFiles.map(file => (
                               <button
                                 key={file.sha}
                                 onClick={() => handleEditFile(selectedRepoForNew, file.name)}
-                                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-secondary transition-all text-left group"
+                                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-[#f5f5f5] transition-all text-left group"
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded bg-background hairline flex items-center justify-center text-muted-foreground">
+                                  <div className="w-8 h-8 rounded bg-[#f5f5f5] flex items-center justify-center text-[#737373] border border-[#e5e5e5]">
                                     <FileJson className="w-4 h-4" />
                                   </div>
-                                  <p className="text-sm font-medium text-foreground">{file.name}</p>
+                                  <p className="body-sm font-semibold text-black" style={{ fontWeight: 540 }}>{file.name}</p>
                                 </div>
-                                <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+                                <ArrowRight className="w-4 h-4 text-[#e5e5e5] opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                               </button>
                             ))}
                           </div>
                         ) : (
-                          <div className="p-8 text-center bg-secondary/30 rounded-lg border border-dashed border-border">
-                            <p className="text-xs text-muted-foreground italic">No JSON configurations found in root.</p>
+                          <div className="p-6 text-center bg-[#f5f5f5] rounded-lg border border-dashed border-[#e5e5e5]">
+                            <p className="text-xs text-[#737373] italic" style={{ fontWeight: 320 }}>No JSON configurations found in root.</p>
                           </div>
                         )}
                       </div>
@@ -475,95 +445,105 @@ export const Dashboard: React.FC<DashboardProps> = ({ onEditFile }) => {
               </div>
             ) : (
               <div className="space-y-6">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <button
                   onClick={() => setModalStep('file')}
-                  className="mb-2 -ml-2 text-muted-foreground hover:text-foreground h-8"
+                  className="inline-flex items-center gap-2 text-[#737373] hover:text-black transition-colors body-sm" style={{ fontWeight: 320 }}
                 >
-                  <ArrowRight className="w-3.5 h-3.5 rotate-180 mr-2" />
+                  <ArrowRight className="w-4 h-4 rotate-180" />
                   Back to Files
-                </Button>
+                </button>
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">File Name</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#737373] ml-1" style={{ fontWeight: 540 }}>File Name</label>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 relative">
-                        <FileJson className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-link" />
-                        <Input 
-                          placeholder="config_v1" 
+                        <FileJson className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                        <Input
+                          placeholder="config_v1"
                           value={newFileName}
                           onChange={(e) => setNewFileName(e.target.value)}
-                          className="pl-10 h-12 bg-secondary/50 border-border text-foreground text-lg font-medium"
+                          className="pl-10 h-12 bg-[#f5f5f5] border border-[#e5e5e5] text-black rounded-lg text-lg font-semibold"
+                          style={{ fontWeight: 540 }}
                           autoFocus
                           onKeyDown={(e) => e.key === 'Enter' && handleEditFile(selectedRepoForNew, null)}
                         />
                       </div>
-                      <span className="text-xl font-bold text-muted-foreground/40">.json</span>
+                      <span className="text-lg font-bold text-[#737373]" style={{ fontWeight: 540 }}>.json</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-[#737373] mt-2" style={{ fontWeight: 320 }}>
                       This file will be created in the root of your repository.
                     </p>
                   </div>
 
-                  <Button 
-                    className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl"
+                  <button
                     onClick={() => handleEditFile(selectedRepoForNew, null)}
+                    className="btn-primary w-full"
                   >
                     Start Designing
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
-            )}
+            )
+            }
           </div>
-          
-          <div className="p-4 bg-muted/30 border-t border-border flex justify-end">
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+
+          <div className="p-4 bg-[#f5f5f5] border-t border-[#e5e5e5] flex justify-end">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-[#737373] hover:text-black transition-colors body-sm px-4 py-2" style={{ fontWeight: 320 }}
+            >
+              Cancel
+            </button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Permissions Help Dialog */}
       <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-md">
+        <DialogContent className="sm:max-w-[420px] md:max-w-[620px] bg-white border border-[#e5e5e5] rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-foreground font-semibold">
-              <ShieldCheck className="w-5 h-5 text-link" />
+            <DialogTitle className="headline text-black flex items-center gap-2" style={{ fontSize: 22, fontWeight: 540 }}>
+              <ShieldCheck className="w-5 h-5 text-black" />
               GitHub Permissions
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="body-sm text-[#737373] mt-2" style={{ fontWeight: 320 }}>
               To manage your configurations, your GitHub token needs the following permissions.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-3 py-4">
+
+          <div className="gap-3 py-4 grid grid-cols-2">
             {[
               { name: 'repo', desc: 'Full control of private and public repositories.' },
               { name: 'contents', desc: 'Read and write access to repository contents.' },
               { name: 'workflow', desc: 'Allow updating GitHub Actions workflow files.' },
               { name: 'metadata', desc: 'Read-only access to repository metadata.' }
             ].map((scope) => (
-              <div key={scope.name} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50 border border-border">
-                <CheckCircle2 className="w-4 h-4 text-link mt-0.5 shrink-0" />
+              <div key={scope.name} className="flex items-start gap-3 p-4 rounded-2xl bg-[#f5f5f5] border border-[#e5e5e5]">
+                <CheckCircle2 className="w-4 h-4 text-black mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-foreground font-mono leading-none">{scope.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{scope.desc}</p>
+                  <p className="text-sm font-mono font-bold text-black uppercase tracking-widest" style={{ fontWeight: 540 }}>{scope.name}</p>
+                  <p className="text-xs text-[#737373] mt-1.5 leading-relaxed leading-sm" style={{ fontWeight: 320 }}>{scope.desc}</p>
                 </div>
               </div>
             ))}
 
-            <div className="p-4 rounded-xl bg-link/5 border border-link/20 mt-4">
-              <p className="text-xs text-link font-medium leading-relaxed">
-                Tip: If you encounter "Permission Denied" errors, verify that your token hasn't expired and that all checkboxes above are checked in your <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="underline font-bold">GitHub settings</a>.
-              </p>
-            </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#d4f57a]/10 border border-[#d4f57a]/30">
+            <p className="text-xs text-black font-semibold leading-relaxed" style={{ fontWeight: 540 }}>
+              💡 Tip: If you encounter "Permission Denied" errors, verify that your token hasn't expired and that all checkboxes above are checked in your <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="underline font-bold">GitHub settings</a>.
+            </p>
           </div>
 
-          <DialogFooter className="sm:justify-start">
-            <Button variant="secondary" onClick={() => setIsHelpOpen(false)} className="w-full bg-secondary hover:bg-secondary/80">Got it, thanks!</Button>
-          </DialogFooter>
+          <div className="border-t border-[#e5e5e5] pt-6 flex justify-end gap-3">
+            <button
+              onClick={() => setIsHelpOpen(false)}
+              className="btn-secondary border border-[#e5e5e5]"
+            >
+              Got it, thanks!
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

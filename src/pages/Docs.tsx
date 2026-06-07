@@ -64,7 +64,7 @@ export function Docs() {
           <h1 className="display-xl text-black mb-6 max-w-2xl">
             Connect your GitHub account.
           </h1>
-          <p className="body-lg text-[#3d3d3d] max-w-xl" style={{ fontWeight: 330 }}>
+          <p className="body-lg text-[#3d3d3d]" style={{ fontWeight: 330 }}>
             You need a <strong style={{ fontWeight: 540 }}>GitHub Personal Access Token</strong> to authorize RemoteConfig.io.
             This guide walks through every step clearly.
           </p>
@@ -84,8 +84,8 @@ export function Docs() {
         </section>
 
         {/* ── LIME BLOCK — full guide ───────────── */}
-        <section className="color-block color-block-lime section-gap">
-          <div className="max-w-3xl">
+        <section className="color-block color-block-lime section-gap max-w-5xl mx-auto">
+          <div className="">
             <div className="flex items-center gap-3 mb-10">
               <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center">
                 <Key className="w-4 h-4 text-white" />
@@ -244,10 +244,10 @@ export function Docs() {
                 <ShieldCheck className="w-7 h-7 text-white" />
               </div>
               <h3 className="display-lg text-black mb-4" style={{ fontSize: 36 }}>You're all set! 🎉</h3>
-              <p className="body-lg text-black/60 max-w-sm mx-auto mb-8" style={{ fontWeight: 330 }}>
+              <p className="body-lg text-black/60 mx-auto mb-8" style={{ fontWeight: 330 }}>
                 Paste your token on the login page and you'll be inside your dashboard instantly.
               </p>
-              <Link to="/login" className="btn-primary inline-flex gap-2">
+              <Link to="/register" className="btn-primary inline-flex gap-2">
                 Go to dashboard <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -260,7 +260,7 @@ export function Docs() {
             <HelpCircle className="w-7 h-7 text-black" />
           </div>
           <h3 className="display-lg text-black mb-4" style={{ fontSize: 36 }}>Still stuck?</h3>
-          <p className="body-lg text-[#737373] max-w-sm mx-auto mb-8" style={{ fontWeight: 330 }}>
+          <p className="body-lg text-[#737373] mx-auto mb-8" style={{ fontWeight: 330 }}>
             The community is here. Open a GitHub issue and we'll help you debug it.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

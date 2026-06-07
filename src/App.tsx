@@ -20,7 +20,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       <p className="mt-5 caption text-[#737373]">Connecting…</p>
     </div>
   );
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/register" replace />;
   return <>{children}</>;
 }
 
@@ -39,7 +39,7 @@ function AppContent() {
       </Route>
 
       {/* Auth — no layout chrome */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Login />} />
 
       {/* Protected routes */}
       <Route element={

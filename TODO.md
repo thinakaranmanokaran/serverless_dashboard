@@ -25,7 +25,7 @@
 - ✅ HowTo schema (8 steps) in Docs — eligible for Google rich results
 - ✅ BreadcrumbList in Docs
 - ✅ FAQPage schema in Home (5 questions) — eligible for Google FAQ rich results
-- ✅ sitemap.xml updated with /login route
+- ✅ sitemap.xml updated with /register route
 - ✅ robots.txt — disallows /dashboard, /editor
 
 ### Phase 5: Quality

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 import { 
   Zap, Github, Shield, Globe, ChevronRight, 
   ArrowRight, FileJson, GitBranch, Lock, 
@@ -42,24 +43,26 @@ const faqSchema = {
 };
 
 export function Home() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
   return (
     <>
       <div className="max-w-[1280px] mx-auto px-6">
 
         {/* ── HERO — white ──────────────────────── */}
-        <section className="py-20 md:py-28">
+        <section className="py-20 md:py-16">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <p className="eyebrow text-[#737373] mb-6">The GitHub-native config platform</p>
             <h1 className="display-xl text-black mb-8 max-w-3xl">
               Your config.<br />
               <span className="opacity-30">Zero infrastructure.</span>
             </h1>
-            <p className="body-lg text-[#3d3d3d] max-w-xl mb-10 opacity-80" style={{ fontWeight: 330 }}>
+            <p className="body-lg text-[#3d3d3d] w-2/4 mb-10 opacity-80" style={{ fontWeight: 330 }}>
               Manage production settings in real-time directly from your GitHub repositories.
               No backend. No lock-in. Full audit trail.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link to="/login" className="btn-primary gap-2">
+              <Link to="/register" className="btn-primary gap-2">
                 Get started free <ChevronRight className="w-4 h-4" />
               </Link>
               <Link to="/docs" className="btn-secondary border border-[#e5e5e5]">
@@ -69,7 +72,7 @@ export function Home() {
           </motion.div>
 
           {/* Stat pills */}
-          <div className="mt-16 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-3 hidden">
             {[
               { label: 'Architecture', val: 'Serverless' },
               { label: 'Storage', val: 'Git-Based' },
@@ -110,7 +113,7 @@ export function Home() {
                 </div>
               ))}
             </div>
-            <Link to="/login" className="btn-primary mt-10 inline-flex gap-2">
+            <Link to="/register" className="btn-primary mt-10 inline-flex gap-2">
               Start for free <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -119,7 +122,7 @@ export function Home() {
         {/* ── WHITE — Features bento ────────────── */}
         <section className="section-gap">
           <p className="eyebrow text-[#737373] mb-4">Core capabilities</p>
-          <h2 className="display-lg text-black mb-14 max-w-lg">
+          <h2 className="display-lg text-black mb-14 ">
             Built for developers who ship.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -134,9 +137,9 @@ export function Home() {
               <motion.div
                 key={title}
                 whileHover={{ y: -3 }}
-                className="p-7 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-colors"
+                className="p-7 rounded-3xl border border-[#e5e5e5] bg-white group hover:border-black/20 transition-colors duration-300"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#f5f5f5] flex items-center justify-center mb-5 group-hover:bg-black group-hover:text-white transition-all">
+                <div className="w-10 h-10 rounded-xl bg-[#f5f5f5] flex items-center justify-center mb-5 group-hover:bg-black group-hover:text-white transition-all  duration-300">
                   <Icon className="w-4.5 h-4.5" />
                 </div>
                 <h3 className="headline text-black mb-2" style={{ fontSize: 17, fontWeight: 540 }}>{title}</h3>
@@ -170,7 +173,7 @@ export function Home() {
                 </div>
               ))}
             </div>
-            <Link to="/login" className="btn-secondary inline-flex gap-2">
+            <Link to="/register" className="btn-secondary inline-flex gap-2">
               Try it now <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -208,13 +211,39 @@ export function Home() {
             </h2>
             <div className="space-y-3">
               {faqs.map(({ q, a }, i) => (
-                <details key={i} className="group bg-white/70 rounded-2xl overflow-hidden">
-                  <summary className="flex items-center justify-between p-6 cursor-pointer list-none" style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 480, fontSize: 17 }}>
+                <motion.div
+                  key={i}
+                  className="bg-white/70 rounded-2xl overflow-hidden"
+                  initial={false}
+                >
+                  <motion.button
+                    onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                    className="w-full flex items-center justify-between p-6 cursor-pointer text-left hover:bg-white/50 transition-colors"
+                    style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 480, fontSize: 17 }}
+                  >
                     {q}
-                    <Plus className="w-4 h-4 shrink-0 group-open:rotate-45 transition-transform" />
-                  </summary>
-                  <div className="px-6 pb-6 body-sm text-[#3d3d3d]" style={{ fontWeight: 320 }}>{a}</div>
-                </details>
+                    <motion.div
+                      animate={{ rotate: openIndex === i ? 45 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Plus className="w-4 h-4 shrink-0" />
+                    </motion.div>
+                  </motion.button>
+                  <AnimatePresence initial={false}>
+                    {openIndex === i && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      >
+                        <div className="px-6 pb-6 body-sm text-[#3d3d3d]" style={{ fontWeight: 320 }}>
+                          {a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -223,14 +252,14 @@ export function Home() {
         {/* ── WHITE — CTA closer ────────────────── */}
         <section className="section-gap text-center py-20">
           <p className="eyebrow text-[#737373] mb-6">Ready?</p>
-          <h2 className="display-lg text-black mb-6 mx-auto max-w-2xl">
+          <h2 className="display-lg text-black mb-6 mx-auto">
             Connect GitHub.<br />Start in 5 minutes.
           </h2>
-          <p className="body-lg text-[#737373] mb-10 max-w-md mx-auto" style={{ fontWeight: 330 }}>
+          <p className="body-lg text-[#737373] mb-10 mx-auto" style={{ fontWeight: 330 }}>
             No credit card. No server setup. Just a GitHub token and a repository.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/login" className="btn-primary gap-2">
+            <Link to="/register" className="btn-primary gap-2">
               Get started free <ChevronRight className="w-4 h-4" />
             </Link>
             <Link to="/docs" className="btn-secondary border border-[#e5e5e5]">

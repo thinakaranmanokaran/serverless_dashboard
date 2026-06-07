@@ -10,8 +10,8 @@ export function Footer() {
           {/* Wordmark column */}
           <div className="col-span-2 md:col-span-1">
             <div className="mb-6">
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 28, letterSpacing: '-0.5px', lineHeight: 1 }} className="text-black block">
-                Remote<br />Config
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 28, letterSpacing: '-0.5px', lineHeight: 1 }} className="text-black block mb-2">
+                Remote Config
               </span>
               <span className="caption text-[#737373] mt-1 block">Zero-infrastructure config.</span>
             </div>
