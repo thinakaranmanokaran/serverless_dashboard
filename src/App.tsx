@@ -4,7 +4,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from 'sonner';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
-import { Editor } from './pages/Editor';
+import Editor from './pages/Editor';
 import { Home } from './pages/Home';
 import { Docs } from './pages/Docs';
 import { Privacy } from './pages/Privacy';
