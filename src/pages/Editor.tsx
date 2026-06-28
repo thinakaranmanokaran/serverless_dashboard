@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import SmoothEditor from "./SmoothEditor";
+import { GitHubService, GitHubRepo, GitHubBranch, GitHubFile } from "@/services/github";
 
 /* ------------------------------------------------------------------
    Google Fonts — DM Sans (UI) + JetBrains Mono (code / data / labels)
-   Swapped DM Mono -> JetBrains Mono: crisper hinting at small sizes,
-   so key names / JSON / file paths don't look soft or blurry.
-   In your real app, move this <link> into index.html <head> instead
-   of injecting at runtime. Kept here so the artifact is self-contained.
 ------------------------------------------------------------------- */
 const FontLoader = () => {
   useEffect(() => {
@@ -21,32 +18,18 @@ const FontLoader = () => {
   return null;
 };
 
-/* ------------------------------------------------------------------
-   Mock data layer — stand-in for useGitHub()/service so this preview
-   runs on its own. Swap this block for your real hook in production.
-------------------------------------------------------------------- */
-const MOCK_BRANCHES = [{ name: "main" }, { name: "develop" }, { name: "feature/pricing-flags" }];
-
-// NOTE: these paths now sit at the actual repo root (no "config/" prefix)
-// since service.getContents(owner, repo, '', branch) lists root contents —
-// the previous mock data implied a subfolder that the real call never reads.
-const MOCK_FILES = [
-  { sha: "f0", name: "remoteconfig.json", path: "remoteconfig.json", dirty: false },
-  { sha: "f1", name: "feature-flags.json", path: "feature-flags.json", dirty: false },
-  { sha: "f2", name: "maintenance.json", path: "maintenance.json", dirty: true },
-  { sha: "f3", name: "api-settings.json", path: "api-settings.json", dirty: false },
-  { sha: "f4", name: "ui-theme.json", path: "ui-theme.json", dirty: false },
-];
-
-const MOCK_FILE_CONTENT = {
-  f0: { appName: "RemoteConfig.io", environment: "production", version: "2.4.1", debug: false },
-  f1: { features: { newOnboarding: true, betaProfile: false, darkTheme: true }, version: "1.0.0" },
-  f2: { maintenance: { enabled: false, title: "Scheduled Maintenance", message: "We'll be back in 2 hours", retryAfter: 7200 } },
-  f3: { api: { timeout: 5000, retryAttempts: 3, endpoints: ["v1", "v2"] } },
-  f4: { ui: { borderRadius: 8, accentColor: "#0d74ce" } },
-};
-
-const REPO = { name: "remoteconfig-prod", owner: { login: "thinakaran" }, private: false };
+// Filenames that are JSON but never represent app/remote configuration.
+// These are excluded from the default "root config files" view and only
+// appear once the person flips the list to "All".
+const NON_CONFIG_FILENAMES = new Set([
+  "package.json",
+  "package-lock.json",
+  "npm-shrinkwrap.json",
+  "tsconfig.json",
+  "jsconfig.json",
+  "composer.json",
+  "composer.lock",
+]);
 
 const PRESETS = [
   {
@@ -69,11 +52,6 @@ const PRESETS = [
 /* ------------------------------------------------------------------
    Sonner-style toast system.
    In your real app this is just: import { toast } from 'sonner'
-   and you delete this whole block + <SonnerStack/>. Rebuilt here to
-   match sonner's actual visual language (white card, left icon,
-   thin border, bottom-right stack, slide+fade transitions) instead
-   of the previous solid-black custom toast. Also mirrors sonner's
-   real action-button shape: toast.success(msg, { description, action }).
 ------------------------------------------------------------------- */
 function useToast() {
   const [toasts, setToasts] = useState([]);
@@ -138,12 +116,6 @@ function SonnerStack({ toasts, onDismiss }) {
 
 /* ------------------------------------------------------------------
    Visual Builder
-   - Grid-aligned rows: handle | key | type pill | value all sit in
-     fixed-width columns so short/long keys no longer push the type
-     pill and input out of alignment (the bug from the screenshot).
-   - Drag-to-reorder now applies to CHILD fields inside an object,
-     not the top-level keys.
-   - "+ Add field" button at the bottom of every object/root level.
 ------------------------------------------------------------------- */
 function inferType(v) {
   if (typeof v === "boolean") return "boolean";
@@ -326,11 +298,6 @@ function FieldRow({ k, v, path, onChange, onDelete, depth, dragHandleProps, isDr
   );
 }
 
-/**
- * ChildList renders the entries of a single object level and owns
- * drag-to-reorder for THOSE children only (top-level keys are never
- * draggable — VisualBuilder renders them with no drag handles).
- */
 function ChildList({ obj, path, depth, onChange }) {
   const keys = Object.keys(obj);
   const [dragKey, setDragKey] = useState(null);
@@ -426,7 +393,6 @@ function VisualBuilder({ data, onChange }) {
 
   return (
     <div className="rc-builder">
-      {/* Top level: no drag handles — only nested object children are draggable */}
       {keys.map((k) => (
         <FieldRow
           key={k}
@@ -572,15 +538,46 @@ const GlobeIcon = (p) => (
 /* ------------------------------------------------------------------
    Main Editor
 ------------------------------------------------------------------- */
-export default function Editor() {
-  const toast = useToast();
+/* ------------------------------------------------------------------
+   Main Editor
 
-  const [view, setView] = useState("editor");
-  const [selectedRepo, setSelectedRepo] = useState(REPO);
-  const [branches] = useState(MOCK_BRANCHES);
-  const [selectedBranch, setSelectedBranch] = useState(MOCK_BRANCHES[0].name);
-  const [files, setFiles] = useState(MOCK_FILES);
-  const [currentFile, setCurrentFile] = useState(null);
+   ARCHITECTURE NOTE (this was the actual bug, not just the param name):
+   App.tsx never asks this component to look itself up from the URL.
+   `RepoRoute` resolves the repo from `location.state.repo` (the full
+   object Dashboard already fetched from GitHub) and redirects to
+   /dashboard if that state is missing — only THEN does it render
+   `<Editor repo={repo} initialPath={initialPath} onBack={...} />`.
+   The `/editor` route does the same thing from local state. So Editor
+   must be a controlled component driven by props, not a page that
+   re-fetches its own repo from `useParams()`. The previous version's
+   `owner` was empty for two stacked reasons: the route names that
+   segment `:username`, not `:owner` — and even fixing that name
+   wouldn't have mattered, because this route path is never reached
+   with real data unless someone already navigated here with state.
+------------------------------------------------------------------- */
+interface EditorProps {
+  repo: GitHubRepo;
+  initialPath?: string | null;
+  onBack: () => void;
+}
+
+export default function Editor({ repo, initialPath, onBack }: EditorProps) {
+  const toast = useToast();
+  const selectedRepo = repo;
+
+  // Branches
+  const [branches, setBranches] = useState<GitHubBranch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
+
+  // Files
+  const [files, setFiles] = useState<GitHubFile[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [showAllFiles, setShowAllFiles] = useState(false);
+
+  // Active file / editor state
+  const [currentFile, setCurrentFile] = useState<(GitHubFile & { sha?: string }) | null>(null);
   const [configData, setConfigData] = useState({});
   const [rawJson, setRawJson] = useState("");
   const [viewMode, setViewMode] = useState("visual");
@@ -590,9 +587,27 @@ export default function Editor() {
   const [newFilePath, setNewFilePath] = useState("");
   const [isPresetsOpen, setIsPresetsOpen] = useState(false);
   const [jsonError, setJsonError] = useState(null);
-  const [branchOpen, setBranchOpen] = useState(false);
+  const [authError, setAuthError] = useState(false);
 
-  const syncTimeout = useRef(null);
+  // Tracks the last-saved/last-loaded JSON string so we can derive a real
+  // "unsaved changes" indicator instead of a `dirty` field the live
+  // GitHub API response never actually sends.
+  const lastSavedRef = useRef("");
+
+  // ?file= deep-linking (RepoRoute reads this off the URL and passes it
+  // down) should only ever auto-select a file once, not re-fire every
+  // time `files` reloads (e.g. after a save).
+  const hasAppliedInitialPath = useRef(false);
+
+  const token = useMemo(
+    () => (typeof window !== "undefined" ? localStorage.getItem("gh_token") : null),
+    []
+  );
+
+  const githubService = useMemo(() => {
+    if (!token) return null;
+    return new GitHubService(token, () => setAuthError(true));
+  }, [token]);
 
   const resetEditorState = () => {
     setCurrentFile(null);
@@ -601,38 +616,148 @@ export default function Editor() {
     setViewMode("visual");
     setNewFilePath("");
     setJsonError(null);
+    lastSavedRef.current = "";
   };
+
+  // Single source of truth for branches — previously this was duplicated
+  // across three separate effects/functions that all fired independently.
+  useEffect(() => {
+    if (!selectedRepo || !githubService) return;
+    let cancelled = false;
+
+    setIsLoadingBranches(true);
+    githubService
+      .getBranches(selectedRepo.owner.login, selectedRepo.name)
+      .then((list) => {
+        if (cancelled) return;
+        setBranches(Array.isArray(list) ? list : []);
+        if (list?.length) setSelectedBranch(list[0].name);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error(err);
+        setBranches([]);
+        toast.error("Couldn't load branches", err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingBranches(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRepo, githubService]);
+
+  // Single source of truth for files. This is also where the "default to
+  // root config files only, reveal everything with All" requirement is
+  // served from — see `visibleFiles` below.
+  useEffect(() => {
+    if (!selectedRepo || !selectedBranch || !githubService) return;
+    let cancelled = false;
+
+    setIsLoadingFiles(true);
+    githubService
+      .getContents(selectedRepo.owner.login, selectedRepo.name, "", selectedBranch)
+      .then((contents) => {
+        if (cancelled) return;
+        const jsonFiles = Array.isArray(contents)
+          ? contents.filter((item: any) => item.type === "file" && item.name.endsWith(".json"))
+          : [];
+        setFiles(jsonFiles);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error(err);
+        setFiles([]);
+        toast.error("Couldn't load files", err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingFiles(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRepo, selectedBranch, githubService]);
+
+  // Default view: root-level JSON only, with known non-config files
+  // (package.json, lockfiles, tsconfig, etc.) filtered out. Flip "All" to
+  // see every JSON file fetched from the repo root.
+  const visibleFiles = files.filter((file) => {
+    if (showAllFiles) return true;
+    const isRoot = !file.path.includes("/");
+    const isConfigFile = !NON_CONFIG_FILENAMES.has(file.name);
+    return isRoot && isConfigFile;
+  });
 
   const handleBack = () => {
     resetEditorState();
-    setView("dashboard");
+    onBack();
   };
 
-  const handleFileSelect = (file) => {
+  // This is where selecting a file actually populates BOTH the visual
+  // builder and the raw JSON editor — the previous version shadowed its
+  // own `file` parameter and read `currentFile.path` (the *previous*
+  // selection, `null` on first click) instead of the file just clicked.
+  const handleFileSelect = async (file: GitHubFile) => {
+    if (!selectedRepo || !githubService) return;
     setIsLoadingFile(true);
     setJsonError(null);
-    setTimeout(() => {
-      const content = MOCK_FILE_CONTENT[file.sha] || {};
-      setConfigData(content);
-      setRawJson(JSON.stringify(content, null, 2));
-      setCurrentFile(file);
-      setViewMode("visual");
+    setCurrentFile(file); // optimistic — header/list reflect the click immediately
+
+    try {
+      const result = await githubService.getFileContent(
+        selectedRepo.owner.login,
+        selectedRepo.name,
+        file.path,
+        selectedBranch
+      );
+
+      setConfigData(result.content);
+      const formatted = JSON.stringify(result.content, null, 2);
+      setRawJson(formatted);
+      lastSavedRef.current = formatted;
+      setCurrentFile({ ...file, sha: result.sha });
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Couldn't load file", err.message);
+      setCurrentFile(null);
+    } finally {
       setIsLoadingFile(false);
-    }, 450);
+    }
   };
 
-  const handleRawJsonChange = (val) => {
+  // Deep-link support: if RepoRoute passed a ?file=... path, auto-open it
+  // once the file list has actually loaded. Guarded so it only fires once
+  // per mount, not on every files refresh (e.g. after a save).
+  useEffect(() => {
+    if (hasAppliedInitialPath.current) return;
+    if (!initialPath || isLoadingFiles || files.length === 0) return;
+    hasAppliedInitialPath.current = true;
+    const match = files.find((f) => f.path === initialPath);
+    if (match) {
+      handleFileSelect(match);
+    } else {
+      toast.error("File not found", `"${initialPath}" doesn't exist on this branch.`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPath, isLoadingFiles, files]);
+
+  const handleRawJsonChange = (val: string) => {
     setRawJson(val);
     try {
       const parsed = JSON.parse(val);
       setConfigData(parsed);
       setJsonError(null);
-    } catch (e) {
+    } catch (e: any) {
       setJsonError(e.message);
     }
   };
 
-  const handleConfigChange = (newData) => {
+  const syncTimeout = useRef(null);
+  const handleConfigChange = (newData: any) => {
     setIsSyncing(true);
     setConfigData(newData);
     setRawJson(JSON.stringify(newData, null, 2));
@@ -641,56 +766,85 @@ export default function Editor() {
   };
 
   // Builds the public raw-content URL GitHub serves for a file at a given
-  // ref. This only resolves to real content if the repo is public — for
-  // private repos the same URL 404s/401s for anyone without a valid
-  // session/token, so we never present it as a usable "copy" action there.
-  const buildRawUrl = (path) =>
+  // ref. Only resolves to real content for public repos — for private
+  // repos the same URL 404s/401s for anyone without repo access, so it's
+  // never presented as a usable "copy" action when `selectedRepo.private`.
+  const buildRawUrl = (path: string) =>
     `https://raw.githubusercontent.com/${selectedRepo.owner.login}/${selectedRepo.name}/${selectedBranch}/${path}`;
 
-  const handleSave = () => {
-    if (!currentFile && !newFilePath) {
+  // The header's "API" button used to call `handleSave` — a copy-paste
+  // leftover from the Save button right next to it — so clicking it
+  // silently re-saved the file instead of copying a link.
+  const handleCopyApiLink = () => {
+    if (!currentFile) {
+      toast.error("Select or save a file first");
+      return;
+    }
+    if (selectedRepo?.private) {
+      toast.error("Repo is private", "This file's raw URL only works for people with repo access.");
+      return;
+    }
+    navigator.clipboard.writeText(buildRawUrl(currentFile.path));
+    toast.success("API link copied");
+  };
+
+  // Handles both updating an existing file and creating a brand-new one
+  // (previously this unconditionally read `currentFile.path`/`.sha`, which
+  // threw for new files, had no try/catch, and never updated `files` or
+  // cleared the unsaved-changes state on success).
+  const handleSave = async () => {
+    if (!selectedRepo || !githubService) return;
+    const isNewFile = !currentFile;
+    const path = isNewFile ? newFilePath.trim() : currentFile.path;
+
+    if (!path) {
       toast.error("Please select or name a file");
+      return;
+    }
+    if (isNewFile && !path.toLowerCase().endsWith(".json")) {
+      toast.error("File name must end in .json");
       return;
     }
     if (viewMode === "code" && jsonError) {
       toast.error("Invalid JSON format", "Please fix the errors before saving.");
       return;
     }
+
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      const content = JSON.stringify(configData, null, 2);
+      const result = await githubService.updateFile(
+        selectedRepo.owner.login,
+        selectedRepo.name,
+        path,
+        content,
+        isNewFile ? `Create ${path}` : `Update ${path}`,
+        isNewFile ? undefined : currentFile?.sha,
+        selectedBranch
+      );
+
+      const newSha = result?.content?.sha;
+      const savedFile = { name: path.split("/").pop(), path, sha: newSha, type: "file" as const };
+
+      setCurrentFile(savedFile);
+      setRawJson(content);
+      lastSavedRef.current = content;
+      setNewFilePath("");
+
+      setFiles((prev) => {
+        const exists = prev.some((f) => f.path === path);
+        return exists
+          ? prev.map((f) => (f.path === path ? { ...f, sha: newSha } : f))
+          : [...prev, savedFile];
+      });
+
+      toast.success(isNewFile ? "File created" : "Changes saved");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Save failed", err.message);
+    } finally {
       setIsSaving(false);
-      const savedPath = currentFile
-        ? currentFile.path
-        : newFilePath.endsWith(".json")
-        ? newFilePath
-        : `${newFilePath}.json`;
-
-      if (currentFile) {
-        setFiles((fs) => fs.map((f) => (f.sha === currentFile.sha ? { ...f, dirty: false } : f)));
-      } else {
-        // Newly created file — give it a fresh mock sha/path so it shows
-        // up selectable in the list, same as a real GitHub create response would.
-        const newSha = `f${Math.random().toString(36).slice(2, 7)}`;
-        const newFileEntry = { sha: newSha, name: savedPath.split("/").pop(), path: savedPath, dirty: false };
-        setFiles((fs) => [...fs, newFileEntry]);
-        setCurrentFile(newFileEntry);
-      }
-
-      if (selectedRepo.private) {
-        toast.error(
-          "Saved — but this repo is private",
-          "The raw file URL won't load for anyone without access, so it can't be copied as a public link."
-        );
-      } else {
-        toast.success("Configuration saved to GitHub!", undefined, {
-          label: "Copy API link",
-          onClick: () => {
-            navigator.clipboard.writeText(buildRawUrl(savedPath));
-            toast.success("Link copied");
-          },
-        });
-      }
-    }, 700);
+    }
   };
 
   const applyPreset = (preset) => {
@@ -705,24 +859,46 @@ export default function Editor() {
     toast.success("Ready for new config");
   };
 
-  if (view === "dashboard") {
+  // Real unsaved-changes signal, derived instead of trusting a `dirty`
+  // field the live API never sends.
+  const isDirty = currentFile
+    ? rawJson !== lastSavedRef.current
+    : Object.keys(configData).length > 0 || newFilePath.trim() !== "";
+
+  if (authError) {
     return (
       <div className="rc-root">
         <FontLoader />
         <RcStyles />
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 420, gap: 16 }}>
-          <div className="rc-empty-icon"><GithubIcon size={28} /></div>
-          <h2 style={{ fontWeight: 800, fontSize: 20 }}>Dashboard (mock)</h2>
+          <div className="rc-empty-icon"><LockIcon size={24} /></div>
+          <h2 style={{ fontWeight: 800, fontSize: 18 }}>GitHub connection needed</h2>
           <p style={{ color: "#737373", fontSize: 13, maxWidth: 360, textAlign: "center" }}>
-            This stands in for your real dashboard route. The back button correctly unmounted the
-            editor and cleared its state.
+            Your GitHub token is missing or expired. Reconnect your account to keep editing this repo's config files.
           </p>
-          <button className="rc-btn-primary" onClick={() => setView("editor")}>
-            <ArrowLeftIcon size={14} style={{ transform: "rotate(180deg)" }} />
-            Back into editor
+          <button className="rc-btn-primary" onClick={handleBack}>
+            <ArrowLeftIcon size={14} />
+            Back to dashboard
           </button>
         </div>
-        <SonnerStack toasts={toast.toasts} onDismiss={toast.dismiss} />
+      </div>
+    );
+  }
+
+  // Defensive only — App.tsx's RepoRoute / `/editor` route already
+  // guarantee a repo is present before Editor ever mounts.
+  if (!selectedRepo) {
+    return (
+      <div className="rc-root">
+        <FontLoader />
+        <RcStyles />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 420, gap: 16 }}>
+          <p style={{ color: "#737373", fontSize: 13 }}>No repository selected.</p>
+          <button className="rc-btn-primary" onClick={handleBack}>
+            <ArrowLeftIcon size={14} />
+            Back to dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -744,26 +920,23 @@ export default function Editor() {
               <FileJsonIcon size={15} />
             </div>
             <span className="rc-header-file-name">{currentFile?.name || "New configuration"}</span>
-            {currentFile && files.find((f) => f.sha === currentFile.sha)?.dirty && (
-              <span className="rc-dot-dirty" title="Unsaved changes" />
-            )}
+            {isDirty && <span className="rc-dot-dirty" title="Unsaved changes" />}
           </div>
         </div>
 
         <div className="rc-header-right">
           <div className="rc-branch-chip">
             <BranchIcon size={13} />
-            {selectedBranch}
+            {selectedBranch || "—"}
           </div>
           <button className="rc-btn-primary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <SpinIcon size={14} className="rc-spin" /> : <SaveIcon size={14} />}
             Save changes
           </button>
-          <button className="rc-btn-primary" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <SpinIcon size={14} className="rc-spin" /> : <CopyIcon size={14} />}
+          <button className="rc-btn-primary" onClick={handleCopyApiLink} disabled={!currentFile}>
+            <CopyIcon size={14} />
             API
           </button>
-
         </div>
       </header>
 
@@ -772,14 +945,10 @@ export default function Editor() {
           <section className="rc-card rc-card-repo">
             <div className="rc-card-label-row">
               <div className="rc-card-label">Repository</div>
-              <button
-                className={`rc-visibility-pill ${selectedRepo.private ? "is-private" : "is-public"}`}
-                onClick={() => setSelectedRepo((r) => ({ ...r, private: !r.private }))}
-                title="Demo only — your real app reads this from the GitHub repo object"
-              >
+              <span className={`rc-visibility-pill ${selectedRepo.private ? "is-private" : "is-public"}`}>
                 {selectedRepo.private ? <LockIcon size={11} /> : <GlobeIcon size={11} />}
                 {selectedRepo.private ? "Private" : "Public"}
-              </button>
+              </span>
             </div>
             <div className="rc-repo-row">
               <div className="rc-repo-icon">
@@ -793,12 +962,12 @@ export default function Editor() {
 
             <div className="rc-card-sublabel">Branch</div>
             <div className="rc-select-wrap">
-              <button className="rc-select" onClick={() => setBranchOpen((o) => !o)}>
-                <BranchIcon size={13} />
-                <span>{selectedBranch}</span>
+              <button className="rc-select" onClick={() => setBranchOpen((o) => !o)} disabled={isLoadingBranches}>
+                {isLoadingBranches ? <SpinIcon size={13} className="rc-spin" /> : <BranchIcon size={13} />}
+                <span>{isLoadingBranches ? "Loading..." : selectedBranch || "No branches"}</span>
                 <ChevronDown />
               </button>
-              {branchOpen && (
+              {branchOpen && branches.length > 0 && (
                 <div className="rc-select-menu">
                   {branches.map((b) => (
                     <button
@@ -807,6 +976,7 @@ export default function Editor() {
                       onClick={() => {
                         setSelectedBranch(b.name);
                         setBranchOpen(false);
+                        resetEditorState();
                       }}
                     >
                       {b.name}
@@ -820,21 +990,33 @@ export default function Editor() {
           <section className="rc-card rc-card-files">
             <div className="rc-card-label-row">
               <div className="rc-card-label">Configurations</div>
-              <span className="rc-count-pill">{files.length}</span>
+              <div className="rc-files-header-right">
+                <button
+                  className={`rc-all-toggle ${showAllFiles ? "on" : ""}`}
+                  onClick={() => setShowAllFiles((s) => !s)}
+                  title={showAllFiles ? "Showing every JSON file in the repo" : "Showing root-level config files only"}
+                >
+                  <span className="rc-all-toggle-knob" />
+                  <span className="rc-all-toggle-label">All</span>
+                </button>
+                <span className="rc-count-pill">{isLoadingFiles ? "…" : visibleFiles.length}</span>
+              </div>
             </div>
 
             <div className="rc-file-list">
-              {files.length > 0 ? (
-                files.map((file) => (
+              {isLoadingFiles ? (
+                <p className="rc-empty-text">Loading files...</p>
+              ) : visibleFiles.length > 0 ? (
+                visibleFiles.map((file) => (
                   <div key={file.sha} className="rc-file-row-wrap">
                     <button
                       onClick={() => handleFileSelect(file)}
-                      className={`rc-file-item ${currentFile?.sha === file.sha ? "active" : ""}`}
+                      className={`rc-file-item ${currentFile?.path === file.path ? "active" : ""}`}
                     >
                       <FileJsonIcon size={14} />
                       <span className="rc-file-name">{file.name}</span>
                       {!file.path.includes("/") && <span className="rc-root-badge" title="Repository root">root</span>}
-                      {file.dirty && <span className="rc-dot-dirty" title="Unsaved changes" />}
+                      {currentFile?.path === file.path && isDirty && <span className="rc-dot-dirty" title="Unsaved changes" />}
                     </button>
                     <button
                       className="rc-file-copy-btn"
@@ -857,7 +1039,9 @@ export default function Editor() {
                   </div>
                 ))
               ) : (
-                <p className="rc-empty-text">No JSON files found.</p>
+                <p className="rc-empty-text">
+                  {showAllFiles ? "No JSON files found." : "No root config files found. Try \"All\"."}
+                </p>
               )}
             </div>
 
@@ -995,6 +1179,7 @@ export default function Editor() {
   );
 }
 
+
 /* ------------------------------------------------------------------
    Code surface
 ------------------------------------------------------------------- */
@@ -1024,12 +1209,6 @@ function CodeSurface({ rawJson, jsonError, onChange, onCopy }) {
         </div>
       )}
 
-      {/* Monaco-based editor (see SmoothEditor.jsx). Requires monaco-editor
-          to be installed and wired into your bundler — see the setup note
-          at the top of that file. Not runnable inside this artifact
-          preview's sandbox, since Monaco needs real Web Workers that the
-          artifact's single-file runtime can't load; this renders correctly
-          once dropped into your actual Vite/webpack app. */}
       <div className="rc-code-body">
         <SmoothEditor value={rawJson} onChange={onChange} height="100%" />
       </div>
@@ -1114,14 +1293,33 @@ function RcStyles() {
       .rc-card-label-row .rc-card-label { margin-bottom: 0; }
       .rc-card-sublabel { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #a3a3a3; margin: 16px 0 8px; font-family: 'JetBrains Mono', monospace; }
       .rc-count-pill { background: #f5f5f5; border: 1px solid #e5e5e5; color: #737373; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; font-family: 'JetBrains Mono', monospace; }
+      .rc-files-header-right { display: flex; align-items: center; gap: 8px; }
+      .rc-all-toggle {
+        display: flex; align-items: center; gap: 6px; border: none; background: transparent; cursor: pointer;
+        padding: 2px 2px 2px 0; border-radius: 100px;
+      }
+      .rc-all-toggle-knob {
+        width: 30px; height: 18px; border-radius: 100px; background: #e5e5e5; position: relative; flex-shrink: 0;
+        transition: background .15s;
+      }
+      .rc-all-toggle-knob::after {
+        content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+        background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform .15s;
+      }
+      .rc-all-toggle.on .rc-all-toggle-knob { background: #0a0a0a; }
+      .rc-all-toggle.on .rc-all-toggle-knob::after { transform: translateX(12px); }
+      .rc-all-toggle-label {
+        font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #a3a3a3;
+        font-family: 'JetBrains Mono', monospace; transition: color .15s;
+      }
+      .rc-all-toggle.on .rc-all-toggle-label { color: #0a0a0a; }
       .rc-visibility-pill {
         display: flex; align-items: center; gap: 5px; border: 1px solid #e5e5e5; border-radius: 100px;
         padding: 3px 9px 3px 8px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
-        font-family: 'JetBrains Mono', monospace; cursor: pointer; background: #f5f5f5; color: #737373; transition: all .12s;
+        font-family: 'JetBrains Mono', monospace; background: #f5f5f5; color: #737373;
       }
       .rc-visibility-pill.is-public { background: rgba(212,245,122,0.3); color: #3f5a0e; border-color: rgba(132,204,22,0.4); }
       .rc-visibility-pill.is-private { background: #fdf2e9; color: #92400e; border-color: #fde2c8; }
-      .rc-visibility-pill:hover { filter: brightness(0.96); }
 
       .rc-repo-row { display: flex; align-items: center; gap: 12px; }
       .rc-repo-icon { width: 38px; height: 38px; border-radius: 10px; background: #f5f5f5; border: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -1134,6 +1332,7 @@ function RcStyles() {
         width: 100%; height: 38px; display: flex; align-items: center; gap: 8px; background: #f5f5f5; border: 1px solid #e5e5e5;
         border-radius: 10px; padding: 0 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: 'JetBrains Mono', monospace; color: #0a0a0a;
       }
+      .rc-select:disabled { cursor: not-allowed; opacity: .7; }
       .rc-select-menu { position: absolute; top: 44px; left: 0; right: 0; z-index: 30; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); padding: 6px; overflow: hidden; }
       .rc-select-option { width: 100%; text-align: left; padding: 9px 10px; border-radius: 8px; border: none; background: transparent; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'JetBrains Mono', monospace; }
       .rc-select-option:hover { background: #f5f5f5; }

@@ -5,6 +5,32 @@ import { Github, Menu, X, LogOut, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const LOGOS = ['GitHub', 'Vercel', 'Netlify', 'Stripe', 'Linear', 'Notion', 'Railway', 'Supabase'];
+const PROJECTS = [
+  {
+    name: "Prettyhub",
+    url: "https://prettyhub.vercel.app/",
+  },
+  {
+    name: "RemoteConfig",
+    url: "https://github.com/thinakaranmanokaran/RemoteConfig",
+  },
+  {
+    name: "clean n cut",
+    url: "https://thinakaranmanokaran.github.io/clean-n-cut/",
+  },
+  {
+    name: "free epic games",
+    url: "https://freegames-epicstore.vercel.app/",
+  },
+  {
+    name: "spotmix downloader",
+    url: "https://thinakaranmanokaran.github.io/spotmix-downloader/",
+  },
+  {
+    name: "React Boilerplate Plus",
+    url: "https://marketplace.visualstudio.com/items?itemName=thinakaran.react-boilerplate-plus",
+  },
+];
 
 export function Layout() {
   const { token, user, logout } = useGitHub();
@@ -95,10 +121,18 @@ export function Layout() {
       {/* ── Marquee strip ───────────────────────── */}
       <div className="bg-black text-white overflow-hidden h-9 flex items-center" aria-hidden="true">
         <div className="animate-marquee">
-          {[...LOGOS, ...LOGOS, ...LOGOS, ...LOGOS].map((logo, i) => (
-            <span key={i} className="caption px-8 opacity-60 shrink-0">{logo}</span>
-          ))}
-        </div>
+  {[...PROJECTS, ...PROJECTS, ...PROJECTS].map((project, i) => (
+    <a
+      key={i}
+      href={project.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="caption px-8 opacity-60 shrink-0 hover:opacity-100 transition-opacity"
+    >
+      {project.name}
+    </a>
+  ))}
+</div>
       </div>
 
       {/* ── Mobile overlay ──────────────────────── */}
@@ -150,6 +184,27 @@ export function Layout() {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      {/* ── Footer ──────────────────────────────── */}
+      <footer className="border-t border-[#e5e5e5] bg-white">
+        <div className="max-w-[1280px] mx-auto w-full px-6 py-6 flex items-center justify-center">
+          <p
+            className="text-sm text-[#a3a3a3] text-center"
+            style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 330 }}
+          >
+            Developed by{' '}
+            <a
+              href="https://thinakaran.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-black hover:underline"
+              style={{ fontWeight: 500 }}
+            >
+              Thinakaran Manokaran
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
