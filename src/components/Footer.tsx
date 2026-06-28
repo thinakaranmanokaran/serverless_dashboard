@@ -11,18 +11,18 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <div className="mb-6">
               <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 28, letterSpacing: '-0.5px', lineHeight: 1 }} className="text-black block mb-2">
-                Remote Config
+                Serverless Dashboard
               </span>
               <span className="caption text-[#737373] mt-1 block">Zero-infrastructure config.</span>
             </div>
             <div className="flex gap-3">
               <a href="https://github.com" target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center hover:bg-black hover:text-white transition-all text-black">
-                <Github className="w-3.5 h-3.5" />
+                className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center hover:bg-black hover:text-white transition-all text-black" aria-label="GitHub">
+                <Github className="w-3.5 h-3.5" aria-hidden="true" />
               </a>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center hover:bg-black hover:text-white transition-all text-black">
-                <Twitter className="w-3.5 h-3.5" />
+                className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center hover:bg-black hover:text-white transition-all text-black" aria-label="Twitter">
+                <Twitter className="w-3.5 h-3.5" aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -80,7 +80,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-[#e5e5e5] flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="caption text-[#737373]">© 2026 RemoteConfig.io</p>
+          <p className="caption text-[#737373]">© 2026 Serverless Dashboard</p>
           <p className="caption text-[#737373]">
             Developed by{' '}
             <a href="https://thinakaran.dev/" target="_blank" rel="noopener noreferrer" className="text-black hover:underline font-medium">

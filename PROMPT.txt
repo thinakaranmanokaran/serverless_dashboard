@@ -1,1 +1,363 @@
-Need to Make a Best UI for this Visual and Raw JSON Layout and Optimise it BEST the UI need to be Best User Experience Friendlt and need to be clean one. And correct the function for Dashboard back button. Do ur best!!!!!!
+You are an elite Senior Frontend Engineer, Technical SEO Specialist, and UI/UX Engineer.
+
+Your task is to transform this existing project into a production-grade, SEO-optimized web application without breaking any existing functionality or UI.
+
+==========================
+OBJECTIVES
+==========================
+
+1. Analyze the entire codebase before making any modifications.
+2. Preserve the existing design and functionality.
+3. Improve the project to achieve excellent SEO, accessibility, and performance.
+4. Follow modern React/Vite best practices.
+5. Do NOT introduce unnecessary dependencies.
+
+==========================
+ANALYZE FIRST
+==========================
+
+Before changing anything:
+
+• Understand the project structure.
+• Identify routing.
+• Identify layouts.
+• Identify pages.
+• Find reusable components.
+• Find where metadata is currently handled.
+• Find the developer information inside Layout.tsx.
+• Reuse existing architecture instead of replacing it.
+
+==========================
+SEO REQUIREMENTS
+==========================
+
+Implement complete production-level SEO.
+
+### Global Metadata
+
+Configure:
+
+- title template
+- meta description
+- keywords
+- author
+- robots
+- canonical URLs
+- viewport
+- theme-color
+- color-scheme
+- charset
+- language
+
+Developer:
+
+Thinakaran Manokaran
+
+Read Layout.tsx and reuse the existing developer links instead of hardcoding new ones.
+
+==========================
+PAGE SEO
+==========================
+
+Every public page must have unique:
+
+- title
+- description
+- keywords
+- canonical
+- OpenGraph
+- Twitter metadata
+
+No duplicated metadata.
+
+==========================
+OPEN GRAPH
+==========================
+
+Implement:
+
+og:title
+
+og:description
+
+og:image
+
+og:url
+
+og:type
+
+og:site_name
+
+Twitter:
+
+twitter:card
+
+twitter:title
+
+twitter:description
+
+twitter:image
+
+==========================
+STRUCTURED DATA
+==========================
+
+Add JSON-LD where appropriate.
+
+Use:
+
+Organization
+
+SoftwareApplication
+
+WebSite
+
+BreadcrumbList
+
+FAQPage (if FAQ exists)
+
+WebPage
+
+Do not create fake information.
+
+==========================
+CANONICAL URLS
+==========================
+
+Every indexable page must include:
+
+<link rel="canonical">
+
+No duplicate canonical URLs.
+
+==========================
+SITEMAP
+==========================
+
+Generate:
+
+public/sitemap.xml
+
+Automatically include all public routes.
+
+==========================
+ROBOTS
+==========================
+
+Create or improve robots.txt.
+
+Allow search engines to crawl public pages.
+
+Block unnecessary pages if applicable.
+
+Reference sitemap.xml.
+
+==========================
+ACCESSIBILITY
+==========================
+
+Improve accessibility without changing the UI.
+
+Requirements:
+
+Semantic HTML
+
+Proper heading hierarchy
+
+ARIA labels
+
+Alt text
+
+Button labels
+
+Keyboard navigation
+
+Focus visibility
+
+==========================
+PERFORMANCE
+==========================
+
+Optimize:
+
+Lazy loading
+
+Dynamic imports
+
+Image loading
+
+Preconnect
+
+DNS Prefetch
+
+Font loading
+
+Bundle size
+
+Tree shaking
+
+Avoid layout shift
+
+Avoid unnecessary renders
+
+==========================
+IMAGE SEO
+==========================
+
+Every image should have:
+
+meaningful alt
+
+loading="lazy" when appropriate
+
+decoding="async"
+
+correct width/height if possible
+
+==========================
+CONTENT SEO
+==========================
+
+Improve headings without changing meaning.
+
+Only one H1 per page.
+
+Proper H2/H3 hierarchy.
+
+Improve semantic structure.
+
+==========================
+INTERNAL LINKING
+==========================
+
+Improve navigation between pages.
+
+Use meaningful anchor text.
+
+==========================
+SOCIAL SHARING
+==========================
+
+Ensure every page renders correctly when shared on:
+
+Facebook
+
+LinkedIn
+
+X (Twitter)
+
+Discord
+
+Slack
+
+==========================
+CODE QUALITY
+==========================
+
+Remove:
+
+dead code
+
+unused imports
+
+unused variables
+
+duplicate metadata
+
+duplicate components
+
+duplicate logic
+
+Fix TypeScript issues if present.
+
+==========================
+BEST PRACTICES
+==========================
+
+Ensure:
+
+No console errors
+
+No hydration issues
+
+No accessibility warnings
+
+No Lighthouse SEO warnings
+
+No invalid HTML
+
+==========================
+DO NOT
+==========================
+
+Do NOT redesign the UI.
+
+Do NOT remove features.
+
+Do NOT break routing.
+
+Do NOT remove animations.
+
+Do NOT change business logic.
+
+Do NOT modify APIs unless necessary.
+
+==========================
+DEVELOPER INFORMATION
+==========================
+
+Locate Layout.tsx.
+
+Extract the existing developer information.
+
+Ensure the author metadata uses:
+
+Thinakaran Manokaran
+
+Reuse the existing developer/project links already defined in Layout.tsx instead of creating new ones.
+
+==========================
+FINAL VALIDATION
+==========================
+
+After all changes:
+
+✔ Build the project successfully.
+
+✔ Ensure zero TypeScript errors.
+
+✔ Ensure zero ESLint errors (if configured).
+
+✔ Verify every route works.
+
+✔ Verify metadata is unique.
+
+✔ Verify structured data is valid.
+
+✔ Verify sitemap includes every public page.
+
+✔ Verify robots.txt is correct.
+
+✔ Verify Lighthouse scores are as high as possible.
+
+Target:
+
+Performance ≥ 95
+
+Accessibility ≥ 100
+
+Best Practices ≥ 100
+
+SEO ≥ 100
+
+==========================
+OUTPUT
+==========================
+
+Modify the existing project directly.
+
+Do not generate explanations.
+
+Do not ask for confirmation.
+
+Make the changes in place while preserving all existing functionality and styling.

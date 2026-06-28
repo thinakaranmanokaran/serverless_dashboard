@@ -3,7 +3,7 @@ import SmoothEditor from "./SmoothEditor";
 import { GitHubService, GitHubRepo, GitHubBranch, GitHubFile } from "@/services/github";
 
 /* ------------------------------------------------------------------
-   Google Fonts — DM Sans (UI) + JetBrains Mono (code / data / labels)
+   Google Fonts - DM Sans (UI) + JetBrains Mono (code / data / labels)
 ------------------------------------------------------------------- */
 const FontLoader = () => {
   useEffect(() => {
@@ -18,7 +18,7 @@ const FontLoader = () => {
   return null;
 };
 
-// Filenames that are JSON but never represent app/remote configuration.
+// Filenames that are JSON but never represent app/serverless_dashboarduration.
 // These are excluded from the default "root config files" view and only
 // appear once the person flips the list to "All".
 const NON_CONFIG_FILENAMES = new Set([
@@ -545,13 +545,13 @@ const GlobeIcon = (p) => (
    App.tsx never asks this component to look itself up from the URL.
    `RepoRoute` resolves the repo from `location.state.repo` (the full
    object Dashboard already fetched from GitHub) and redirects to
-   /dashboard if that state is missing — only THEN does it render
+   /dashboard if that state is missing - only THEN does it render
    `<Editor repo={repo} initialPath={initialPath} onBack={...} />`.
    The `/editor` route does the same thing from local state. So Editor
    must be a controlled component driven by props, not a page that
    re-fetches its own repo from `useParams()`. The previous version's
    `owner` was empty for two stacked reasons: the route names that
-   segment `:username`, not `:owner` — and even fixing that name
+   segment `:username`, not `:owner` - and even fixing that name
    wouldn't have mattered, because this route path is never reached
    with real data unless someone already navigated here with state.
 ------------------------------------------------------------------- */
@@ -619,7 +619,7 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
     lastSavedRef.current = "";
   };
 
-  // Single source of truth for branches — previously this was duplicated
+  // Single source of truth for branches - previously this was duplicated
   // across three separate effects/functions that all fired independently.
   useEffect(() => {
     if (!selectedRepo || !githubService) return;
@@ -651,7 +651,7 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
 
   // Single source of truth for files. This is also where the "default to
   // root config files only, reveal everything with All" requirement is
-  // served from — see `visibleFiles` below.
+  // served from - see `visibleFiles` below.
   useEffect(() => {
     if (!selectedRepo || !selectedBranch || !githubService) return;
     let cancelled = false;
@@ -698,14 +698,14 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
   };
 
   // This is where selecting a file actually populates BOTH the visual
-  // builder and the raw JSON editor — the previous version shadowed its
+  // builder and the raw JSON editor - the previous version shadowed its
   // own `file` parameter and read `currentFile.path` (the *previous*
   // selection, `null` on first click) instead of the file just clicked.
   const handleFileSelect = async (file: GitHubFile) => {
     if (!selectedRepo || !githubService) return;
     setIsLoadingFile(true);
     setJsonError(null);
-    setCurrentFile(file); // optimistic — header/list reflect the click immediately
+    setCurrentFile(file); // optimistic - header/list reflect the click immediately
 
     try {
       const result = await githubService.getFileContent(
@@ -766,14 +766,14 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
   };
 
   // Builds the public raw-content URL GitHub serves for a file at a given
-  // ref. Only resolves to real content for public repos — for private
+  // ref. Only resolves to real content for public repos - for private
   // repos the same URL 404s/401s for anyone without repo access, so it's
   // never presented as a usable "copy" action when `selectedRepo.private`.
   const buildRawUrl = (path: string) =>
     `https://raw.githubusercontent.com/${selectedRepo.owner.login}/${selectedRepo.name}/${selectedBranch}/${path}`;
 
-  // The header's "API" button used to call `handleSave` — a copy-paste
-  // leftover from the Save button right next to it — so clicking it
+  // The header's "API" button used to call `handleSave` - a copy-paste
+  // leftover from the Save button right next to it - so clicking it
   // silently re-saved the file instead of copying a link.
   const handleCopyApiLink = () => {
     if (!currentFile) {
@@ -885,7 +885,7 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
     );
   }
 
-  // Defensive only — App.tsx's RepoRoute / `/editor` route already
+  // Defensive only - App.tsx's RepoRoute / `/editor` route already
   // guarantee a repo is present before Editor ever mounts.
   if (!selectedRepo) {
     return (
@@ -927,7 +927,7 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
         <div className="rc-header-right">
           <div className="rc-branch-chip">
             <BranchIcon size={13} />
-            {selectedBranch || "—"}
+            {selectedBranch || "-"}
           </div>
           <button className="rc-btn-primary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <SpinIcon size={14} className="rc-spin" /> : <SaveIcon size={14} />}
@@ -1032,7 +1032,7 @@ export default function Editor({ repo, initialPath, onBack }: EditorProps) {
                           toast.success("Link copied");
                         }
                       }}
-                      title={selectedRepo.private ? "Private repo — link won't work for others" : "Copy raw file link"}
+                      title={selectedRepo.private ? "Private repo - link won't work for others" : "Copy raw file link"}
                     >
                       {selectedRepo.private ? <LockIcon size={13} /> : <CopyIcon />}
                     </button>

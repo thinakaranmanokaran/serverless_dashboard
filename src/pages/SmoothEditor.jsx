@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
 
 /**
- * SmoothEditor — Monaco-based replacement for the old <textarea> Raw JSON
+ * SmoothEditor - Monaco-based replacement for the old <textarea> Raw JSON
  * view in Editor.tsx.
  *
  * Setup note (do this once in your build, not per-component):
@@ -19,13 +19,13 @@ import * as monaco from "monaco-editor";
  *            plugins: [new MonacoWebpackPlugin({ languages: ['json'] })]
  *
  * Without one of these, Monaco's syntax workers silently fail to load and
- * you'll get a working-but-degraded editor (no validation, no workers).https://raw.githubusercontent.com/thinakaran/remoteconfig-prod/main/feature-flags.json
+ * you'll get a working-but-degraded editor (no validation, no workers).https://raw.githubusercontent.com/thinakaran/serverless_dashboard-prod/main/feature-flags.json
  *
  * Props:
  *  - value: string                 current JSON text
  *  - onChange: (value: string) => void
  *  - onValidationChange?: (errors) => void   surfaces JSON syntax errors
- *  - height?: string               defaults to "100%" — pass a fixed value
+ *  - height?: string               defaults to "100%" - pass a fixed value
  *                                   if the parent isn't already height-bound
  */
 export default function SmoothEditor({ value, onChange, onValidationChange, height = "100%" }) {
@@ -47,9 +47,9 @@ export default function SmoothEditor({ value, onChange, onValidationChange, heig
       lineHeight: 22,
       fontLigatures: true,
 
-      // Smoothness — matches the settings you asked for, with
+      // Smoothness - matches the settings you asked for, with
       // cursorSmoothCaretAnimation set to "explicit" (only animates on
-      // deliberate cursor moves, not every keystroke — feels calmer for
+      // deliberate cursor moves, not every keystroke - feels calmer for
       // a config editor than "on", which animates continuously).
       smoothScrolling: true,
       cursorSmoothCaretAnimation: "explicit",
@@ -113,7 +113,7 @@ export default function SmoothEditor({ value, onChange, onValidationChange, heig
       markersSub?.dispose();
       editor.dispose();
     };
-    // Intentionally mount once — `value` updates are pushed via the effect
+    // Intentionally mount once - `value` updates are pushed via the effect
     // below instead of recreating the editor on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

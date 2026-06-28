@@ -235,7 +235,7 @@ export class GitHubService {
         {
           message,
           content: btoa(unescape(encodeURIComponent(content))),
-          // Omit `sha` entirely when creating a new file — GitHub's API
+          // Omit `sha` entirely when creating a new file - GitHub's API
           // treats a present-but-undefined key fine via axios (it's
           // dropped from the JSON body), but we keep this explicit so the
           // intent (create vs update) stays obvious at the call site.

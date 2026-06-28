@@ -65,7 +65,7 @@ function AppContent() {
           <Route path="/terms" element={<Terms onNavigate={noop} />} />
         </Route>
 
-        {/* Auth — no layout chrome */}
+        {/* Auth - no layout chrome */}
         <Route path="/register" element={<Login />} />
 
         {/* Protected routes */}

@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useGitHub } from '../hooks/useGitHub';
-import { Github, Menu, X, LogOut, ChevronRight } from 'lucide-react';
+import { Menu, X, LogOut, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const LOGOS = ['GitHub', 'Vercel', 'Netlify', 'Stripe', 'Linear', 'Notion', 'Railway', 'Supabase'];
 const PROJECTS = [
   {
     name: "Prettyhub",
     url: "https://prettyhub.vercel.app/",
   },
   {
-    name: "RemoteConfig",
-    url: "https://github.com/thinakaranmanokaran/RemoteConfig",
+    name: "Serverless Dashboard",
+    url: "https://thinakaranmanokaran.github.io/serverless_dashboard",
   },
   {
-    name: "clean n cut",
+    name: "clean & cut",
     url: "https://thinakaranmanokaran.github.io/clean-n-cut/",
   },
   {
@@ -51,26 +50,25 @@ export function Layout() {
       <header className="sticky top-0 z-50 bg-white border-b border-[#e5e5e5] h-14 flex items-center">
         <div className="max-w-[1280px] mx-auto w-full px-6 flex items-center justify-between gap-8">
           {/* Logo */}
-          <Link to="/" className="shrink-0 flex items-center gap-2.5 group">
+          <Link to="/" className="shrink-0 flex items-center gap-2.5 group" aria-label="Serverless Dashboard home">
             <div className="w-7 h-7 rounded-md bg-black flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="RemoteConfig" className="w-5 h-5 object-contain invert" onError={(e) => {
+              <img src="/favicon.png" alt="" className="w-5 h-5 object-contain" aria-hidden="true" onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
-                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="color:white;font-size:10px;font-weight:700">RC</span>';
+                (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="color:white;font-size:10px;font-weight:700">SD</span>';
               }} />
             </div>
             <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 540, fontSize: 15, letterSpacing: '-0.3px' }} className="text-black">
-              RemoteConfig<span className="opacity-40">.io</span>
+              Serverless <span className="opacity-40">Dashboard</span>
             </span>
           </Link>
 
           {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center" aria-label="Main navigation">
             {[
               { href: '/', label: 'Home' },
               { href: '/docs', label: 'Docs' },
               ...(token ? [
                 { href: '/dashboard', label: 'Workspaces' },
-                // { href: '/editor', label: 'Editor' },
               ] : []),
             ].map(({ href, label }) => (
               <Link
@@ -82,6 +80,7 @@ export function Layout() {
                     : 'text-[#737373] hover:text-black hover:bg-[#f5f5f5]'
                 }`}
                 style={{ fontWeight: isActive(href) ? 480 : 330, fontFamily: 'DM Sans, sans-serif' }}
+                aria-current={isActive(href) ? 'page' : undefined}
               >
                 {label}
               </Link>
@@ -96,7 +95,7 @@ export function Layout() {
                   <img src={user.avatar_url} alt={user.login} className="w-7 h-7 rounded-full border border-[#e5e5e5]" />
                 )}
                 <button onClick={handleLogout} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-[#737373] hover:text-black hover:bg-[#f5f5f5] transition-colors" style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 330 }}>
-                  <LogOut className="w-3.5 h-3.5" /> Sign out
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" /> Sign out
                 </button>
               </div>
             ) : (
@@ -112,8 +111,8 @@ export function Layout() {
           </div>
 
           {/* Mobile hamburger */}
-          <button className="md:hidden p-2 rounded-full hover:bg-[#f5f5f5] transition-colors" onClick={() => setMobileOpen(true)}>
-            <Menu className="w-5 h-5" />
+          <button className="md:hidden p-2 rounded-full hover:bg-[#f5f5f5] transition-colors" onClick={() => setMobileOpen(true)} aria-label="Open navigation menu" aria-expanded={mobileOpen}>
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -121,18 +120,19 @@ export function Layout() {
       {/* ── Marquee strip ───────────────────────── */}
       <div className="bg-black text-white overflow-hidden h-9 flex items-center" aria-hidden="true">
         <div className="animate-marquee">
-  {[...PROJECTS, ...PROJECTS, ...PROJECTS].map((project, i) => (
-    <a
-      key={i}
-      href={project.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="caption px-8 opacity-60 shrink-0 hover:opacity-100 transition-opacity"
-    >
-      {project.name}
-    </a>
-  ))}
-</div>
+          {[...PROJECTS, ...PROJECTS, ...PROJECTS].map((project, i) => (
+            <a
+              key={i}
+              href={project.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="caption px-8 opacity-60 shrink-0 hover:opacity-100 transition-opacity"
+              tabIndex={-1}
+            >
+              {project.name}
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* ── Mobile overlay ──────────────────────── */}
@@ -143,26 +143,28 @@ export function Layout() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-white flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
           >
             <div className="h-14 px-6 flex items-center justify-between border-b border-[#e5e5e5]">
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 540, fontSize: 15 }}>RemoteConfig.io</span>
-              <button onClick={() => setMobileOpen(false)} className="p-2 rounded-full hover:bg-[#f5f5f5]">
-                <X className="w-5 h-5" />
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 540, fontSize: 15 }}>Serverless Dashboard</span>
+              <button onClick={() => setMobileOpen(false)} className="p-2 rounded-full hover:bg-[#f5f5f5]" aria-label="Close navigation menu">
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
-            <nav className="flex-1 p-6 space-y-2">
+            <nav className="flex-1 p-6 space-y-2" aria-label="Mobile navigation">
               {[
                 { href: '/', label: 'Home' },
                 { href: '/docs', label: 'Documentation' },
                 ...(token ? [
                   { href: '/dashboard', label: 'Workspaces' },
-                  // { href: '/editor', label: 'Editor' },
                 ] : []),
               ].map(({ href, label }) => (
                 <Link key={href} to={href} onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-between p-4 rounded-2xl hover:bg-[#f5f5f5] transition-colors"
                   style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 340, fontSize: 20 }}>
-                  {label} <ChevronRight className="w-4 h-4 opacity-30" />
+                  {label} <ChevronRight className="w-4 h-4 opacity-30" aria-hidden="true" />
                 </Link>
               ))}
             </nav>

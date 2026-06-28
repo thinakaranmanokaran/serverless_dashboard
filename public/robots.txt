@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /editor
-Sitemap: https://remoteconfig.io/sitemap.xml
+Sitemap: https://thinakaranmanokaran.github.io/serverless_dashboard/sitemap.xml
